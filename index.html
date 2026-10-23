@@ -1,0 +1,2637 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CGTK 2027 — Campus Goes To Kampoeng</title>
+
+  <!-- PWA & Mobile Meta -->
+  <meta name="theme-color" content="#1c1c1c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Pustaka QR Code Generator (Untuk QR Identity Peserta) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Pustaka jsQR (Pembaca Frame Kamera Real-Time di Halaman Scanner) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <!-- Pustaka SheetJS (Perakit Excel LPJ 6 Sheet di Browser Admin) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            cgtk: {
+              navy: '#1d3557',
+              purple: '#6d2e70',
+              magenta: '#b5177e',
+              coral: '#f0544f',
+              orange: '#f77f00',
+              cyan: '#00a8b5',
+              pool: '#1ca3ec'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Standar tombol minimal 44x44px sesuai instruksi Rafly */
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Animasi Halaman, Pop-Up & Menu Mobile */
+    @keyframes pageEnter {
+      0% { opacity: 0; transform: translateY(12px) scale(0.99); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.92) translateY(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes menuSlideDown {
+      0% { opacity: 0; transform: translateY(-10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes shimmerPool {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .page-animate {
+      animation: pageEnter 0.34s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .popup-animate {
+      animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .menu-animate {
+      animation: menuSlideDown 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-float {
+      animation: floatSlow 3.2s ease-in-out infinite;
+    }
+
+    /* Animasi Ikon Hamburger Garis Tiga ke Silang (X) */
+    .hamburger-line {
+      transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: center;
+    }
+    .hamburger-active .line-1 {
+      transform: translateY(6px) rotate(45deg);
+    }
+    .hamburger-active .line-2 {
+      opacity: 0;
+      transform: scaleX(0);
+    }
+    .hamburger-active .line-3 {
+      transform: translateY(-6px) rotate(-45deg);
+    }
+
+    /* Teks Logo CGTK Warna-Warni Sesuai Screenshot */
+    .cgtk-logo-text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      -webkit-text-stroke: 2.5px #ffffff;
+      filter: drop-shadow(0 3px 0 #0f172a) drop-shadow(0 5px 10px rgba(0,0,0,0.22));
+    }
+    .cgtk-logo-sm {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      -webkit-text-stroke: 1.5px #ffffff;
+      filter: drop-shadow(0 2px 0 #0f172a);
+    }
+
+    /* Teks XP Ber-outline Putih Sesuai Screenshot Scanner-Pop-Up */
+    .xp-outline-text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      color: #f77f00;
+      -webkit-text-stroke: 1.2px #ffffff;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+    }
+
+    /* Watermark Diagonal Landing Page */
+    .watermark-bg {
+      position: relative;
+      overflow: hidden;
+    }
+    .watermark-text {
+      position: absolute;
+      top: 48%;
+      left: 52%;
+      transform: translate(-50%, -50%) rotate(-36deg);
+      font-size: clamp(2.6rem, 7.5vw, 5.2rem);
+      font-weight: 900;
+      color: rgba(15, 23, 42, 0.045);
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+      line-height: 1.15;
+      z-index: 0;
+    }
+
+    /* Latar Belakang Air Kolam Biru Interaktif */
+    .pool-bg {
+      background-color: #1ba9e8;
+      background-image: 
+        radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.42) 0%, transparent 32%),
+        radial-gradient(circle at 82% 28%, rgba(255, 255, 255, 0.35) 0%, transparent 38%),
+        radial-gradient(circle at 45% 78%, rgba(255, 255, 255, 0.3) 0%, transparent 42%),
+        linear-gradient(135deg, #0284c7 0%, #0ea5e9 45%, #38bdf8 75%, #bae6fd 100%);
+      background-size: 200% 200%;
+      animation: shimmerPool 14s ease infinite;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+    }
+
+    /* Tabel Lebar Bisa Digeser Sendiri Tanpa Menggeser Badan Halaman */
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-cgtk-magenta selection:text-white">
+
+  <!-- ==================================================================== -->
+  <!-- KOMPONEN 10: OVERLAY PENGUMUMAN DARURAT (GLOBAL)                     -->
+  <!-- ==================================================================== -->
+  <div id="overlay-darurat" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 hidden">
+    <div class="w-full max-w-md bg-rose-600 text-white rounded-3xl p-6 shadow-2xl border-2 border-rose-300 popup-animate">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="w-3 h-3 rounded-full bg-white animate-ping"></span>
+        <span class="text-xs font-black uppercase tracking-widest bg-rose-900 px-2.5 py-1 rounded-md">
+          PENGUMUMAN DARURAT
+        </span>
+      </div>
+      <h3 id="darurat-judul" class="text-xl font-extrabold mb-2"></h3>
+      <p id="darurat-isi" class="text-sm text-rose-100 leading-relaxed mb-6"></p>
+      <button onclick="tutupPopupDarurat()" class="w-full touch-target py-3 bg-white text-rose-700 font-extrabold rounded-2xl shadow-lg hover:bg-rose-50 active:scale-95 transition">
+        Saya Mengerti
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL SUB-FITUR PESERTA (KUIS, PASPOR, MISI, PERINGKAT, RAPOR, JADWAL)-->
+  <!-- ==================================================================== -->
+  <div id="modal-fitur-peserta" class="fixed inset-0 z-[105] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 hidden">
+    <div class="w-full max-w-lg bg-white text-slate-900 rounded-[32px] p-6 shadow-2xl max-h-[88dvh] flex flex-col justify-between popup-animate">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <h3 id="judul-modal-fitur" class="font-display text-lg font-black text-slate-900"></h3>
+        <button onclick="tutupModalFiturPeserta()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 font-bold text-slate-600 flex items-center justify-center">&times;</button>
+      </div>
+      <div id="isi-modal-fitur" class="overflow-y-auto space-y-3 pr-1 flex-1 text-xs"></div>
+      <div class="pt-4 border-t border-slate-100 mt-4">
+        <button onclick="tutupModalFiturPeserta()" class="w-full touch-target py-2.5 bg-slate-900 text-white font-bold rounded-2xl text-xs">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- POP-UP CADANGAN 1: KETIK KODE MANUAL (DARI TOMBOL POP-UP SCANNER)    -->
+  <!-- ==================================================================== -->
+  <div id="modal-ketik-kode" class="fixed inset-0 z-[95] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 hidden">
+    <div class="w-full max-w-sm bg-white text-slate-900 rounded-[32px] p-6 shadow-2xl popup-animate">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-display text-base font-black text-slate-900">Ketik Kode Manual</h3>
+        <button onclick="tutupModalKetikKode()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center hover:bg-slate-200">&times;</button>
+      </div>
+      <p class="text-xs text-slate-500 mb-4">Masukkan kode QR atau kode registrasi jika kamera bermasalah atau QR peserta buram.</p>
+      <form onsubmit="submitKodeQRManual(event)" class="space-y-3">
+        <input type="text" id="input-kode-qr-manual" placeholder="Contoh: CGTK1.f47ac10b..." class="w-full touch-target px-4 py-3 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-mono text-slate-900 outline-none focus:bg-white focus:border-slate-900">
+        <button type="submit" class="w-full touch-target py-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-2xl text-xs shadow transition active:scale-95">
+          Proses Kode
+        </button>
+      </form>
+      <div class="mt-4 pt-3 border-t border-slate-100">
+        <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">Uji 6 Cabang Respons Server Rafly:</span>
+        <div class="grid grid-cols-2 gap-1.5 text-[10px] font-bold">
+          <button type="button" onclick="ujiCabangDariModal('CGTK1.f47ac10b58cc4372a5670e02b2c3d479.a7f3d92b1c8e')" class="p-1.5 rounded-lg bg-emerald-100 text-emerald-800">1. Berhasil (Hijau)</button>
+          <button type="button" onclick="ujiCabangDariModal('SUDAH_SCAN')" class="p-1.5 rounded-lg bg-amber-100 text-amber-900">2. SUDAH_SCAN (Kuning)</button>
+          <button type="button" onclick="ujiCabangDariModal('BELUM_BAYAR')" class="p-1.5 rounded-lg bg-orange-100 text-orange-800">3. BELUM_BAYAR (Oranye)</button>
+          <button type="button" onclick="ujiCabangDariModal('SESI_DITUTUP')" class="p-1.5 rounded-lg bg-rose-100 text-rose-800">4. SESI_DITUTUP (Merah)</button>
+          <button type="button" onclick="ujiCabangDariModal('QR_TIDAK_VALID')" class="p-1.5 rounded-lg bg-rose-100 text-rose-800">5. QR_TIDAK_VALID</button>
+          <button type="button" onclick="ujiCabangDariModal('TERLALU_SERING')" class="p-1.5 rounded-lg bg-orange-100 text-orange-800">6. TERLALU_SERING</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- POP-UP CADANGAN 2: CARI NAMA PESERTA (WAJIB ISI ALASAN)              -->
+  <!-- ==================================================================== -->
+  <div id="modal-presensi-manual" class="fixed inset-0 z-[95] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 hidden">
+    <div class="w-full max-w-md bg-white text-slate-900 rounded-[32px] p-6 shadow-2xl popup-animate">
+      <div class="flex justify-between items-center mb-3">
+        <div>
+          <h3 class="font-display text-base font-black text-slate-900">Cari Nama Peserta</h3>
+          <p class="text-[11px] text-slate-500">Jika peserta lupa bawa HP (POST /attendance/manual, wajib isi alasan)</p>
+        </div>
+        <button onclick="tutupModalManual()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center hover:bg-slate-200">&times;</button>
+      </div>
+
+      <div class="space-y-3.5">
+        <div class="flex gap-2">
+          <input type="text" id="input-cari-manual" placeholder="Ketik nama / sekolah..." class="flex-1 touch-target px-3.5 py-2 rounded-2xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-slate-900 outline-none">
+          <button onclick="cariPesertaLapangan()" class="touch-target px-5 bg-slate-900 text-white font-bold rounded-2xl text-xs hover:bg-slate-800 transition">
+            Cari
+          </button>
+        </div>
+
+        <div id="hasil-cari-manual" class="max-h-40 overflow-y-auto space-y-2"></div>
+
+        <div id="box-alasan-manual" class="hidden space-y-3 pt-3 border-t border-slate-100">
+          <div class="p-2.5 bg-slate-100 rounded-xl text-xs font-bold text-slate-800" id="label-peserta-terpilih"></div>
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">Alasan Presensi Manual <span class="text-rose-600">*</span></label>
+            <input type="text" id="input-alasan-manual" placeholder="Contoh: HP peserta mati / tertinggal di rumah" class="w-full touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-slate-900 outline-none">
+          </div>
+          <button onclick="kirimPresensiManual()" class="w-full touch-target py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl text-xs shadow-md transition active:scale-95">
+            Simpan Presensi Manual
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- HEADER GLOBAL (OTOMATIS DISEMBUNYIKAN SAAT MEMBUKA /scanner)         -->
+  <!-- - Kiri: Lingkaran Profil Toska ('F') + Ikon Trisula                  -->
+  <!-- - Desktop: Menu Horizontal                                           -->
+  <!-- - Mobile: Tombol Garis Tiga (Hamburger Menu) dengan Animasi Halus    -->
+  <!-- - Kanan Atas: Tulisan "CGTK" sebagai Tombol HOME ('/')               -->
+  <!-- ==================================================================== -->
+  <header id="global-header" class="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
+    <div class="max-w-5xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2">
+      
+      <!-- POJOK KIRI ATAS: Lingkaran Profil ('F') menuju Halaman Profil + Ikon Trisula -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="navigasiKe('/profil')" title="Buka Profil, Level & Aktivitas Peserta" class="w-10 h-10 rounded-full bg-cgtk-cyan text-white font-black text-base flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition overflow-hidden border-2 border-white ring-2 ring-cgtk-cyan/30">
+          <!-- [SPACE: GAMBAR AVATAR PROFIL HEADER (JIKA MENGGUNAKAN FOTO)] -->
+          <img id="header-avatar-img" src="" alt="Profil" class="w-full h-full object-cover hidden">
+          <span id="header-avatar-inisial">F</span>
+        </button>
+
+        <!-- [SPACE: ATRIBUT GAMBAR IKON TRISULA HEADER] -->
+        <div class="w-8 h-8 flex items-center justify-center select-none" title="Simbol Trisula CGTK">
+          <img id="header-trident-img" src="" alt="Trisula" class="w-7 h-7 object-contain hidden">
+          <svg id="header-trident-svg" viewBox="0 0 36 36" class="w-7 h-7 drop-shadow-xs">
+            <path d="M4 18 L18 18 M12 10 L26 10 L32 6 M12 18 L28 18 L34 18 M12 26 L26 26 L32 30" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M10 12 L24 12 M10 18 L26 18 M10 24 L24 24" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- TENGAH (KHUSUS DESKTOP/TABLET): Navigasi Horizontal -->
+      <nav class="hidden md:flex items-center gap-1.5">
+        <button onclick="navigasiKe('/')" data-route="/" class="nav-link touch-target px-3.5 py-1.5 text-xs font-extrabold rounded-xl bg-slate-900 text-white transition">Beranda</button>
+        <button onclick="navigasiKe('/dashboard')" data-route="/dashboard" class="nav-link touch-target px-3.5 py-1.5 text-xs font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition">Dashboard</button>
+        <button onclick="navigasiKe('/scanner')" data-route="/scanner" class="nav-link touch-target px-3.5 py-1.5 text-xs font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition">Scanner</button>
+        <button onclick="navigasiKe('/bayar')" data-route="/bayar" class="nav-link touch-target px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition">Bayar</button>
+        <button onclick="navigasiKe('/admin')" data-route="/admin" class="nav-link touch-target px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition">Admin</button>
+      </nav>
+
+      <!-- POJOK KANAN ATAS: Tulisan "CGTK" (Tombol HOME '/') + Tombol Garis Tiga (Mobile) -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="navigasiKe('/')" title="Kembali ke Home (Landing Page)" class="touch-target px-3 py-1.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 flex items-center justify-center group active:scale-95 transition">
+          <!-- [SPACE: GAMBAR LOGO CGTK POJOK KANAN ATAS (OPSIONAL JIKA PAKAI PNG)] -->
+          <div class="cgtk-logo-sm text-xl sm:text-2xl flex items-center tracking-tighter group-hover:scale-105 transition-transform">
+            <span class="text-[#1d3557]">C</span>
+            <span class="text-[#6d2e70]">G</span>
+            <span class="text-[#f0544f]">T</span>
+            <span class="text-[#f77f00]">K</span>
+          </div>
+        </button>
+
+        <!-- TOMBOL GARIS TIGA (HAMBURGER MENU KHUSUS MOBILE) -->
+        <button id="btn-mobile-menu" onclick="toggleMenuMobile()" aria-label="Buka Menu Navigasi" class="md:hidden touch-target w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200/80 text-slate-800 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition">
+          <span class="hamburger-line line-1 w-5 h-0.5 bg-slate-900 rounded-full"></span>
+          <span class="hamburger-line line-2 w-5 h-0.5 bg-slate-900 rounded-full"></span>
+          <span class="hamburger-line line-3 w-5 h-0.5 bg-slate-900 rounded-full"></span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- PANEL DROPDOWN MENU MOBILE (MUNCUL SAAT GARIS TIGA DITEKAN) -->
+    <div id="mobile-menu-drawer" class="md:hidden hidden border-t border-slate-100 bg-white/98 backdrop-blur-xl px-4 pt-3 pb-5 shadow-xl menu-animate">
+      <div class="grid grid-cols-1 gap-1.5">
+        <button onclick="navigasiKe('/')" data-route="/" class="nav-link-mobile touch-target w-full px-4 py-3 rounded-2xl text-left text-xs font-extrabold flex items-center justify-between bg-slate-900 text-white transition">
+          <span>🏠 Beranda</span>
+          <span class="text-[10px] opacity-75">Home</span>
+        </button>
+        <button onclick="navigasiKe('/dashboard')" data-route="/dashboard" class="nav-link-mobile touch-target w-full px-4 py-3 rounded-2xl text-left text-xs font-bold flex items-center justify-between text-slate-700 hover:bg-slate-100 transition">
+          <span>🪪 Dashboard Peserta</span>
+          <span class="text-[10px] text-slate-400">QR &amp; Level</span>
+        </button>
+        <button onclick="navigasiKe('/scanner')" data-route="/scanner" class="nav-link-mobile touch-target w-full px-4 py-3 rounded-2xl text-left text-xs font-bold flex items-center justify-between text-slate-700 hover:bg-slate-100 transition">
+          <span>📷 Scanner Presensi</span>
+          <span class="text-[10px] text-slate-400">Kamera Penuh</span>
+        </button>
+        <button onclick="navigasiKe('/bayar')" data-route="/bayar" class="nav-link-mobile touch-target w-full px-4 py-3 rounded-2xl text-left text-xs font-bold flex items-center justify-between text-slate-700 hover:bg-slate-100 transition">
+          <span>💳 Pembayaran</span>
+          <span class="text-[10px] text-slate-400">Kode &amp; Form</span>
+        </button>
+        <button onclick="navigasiKe('/admin')" data-route="/admin" class="nav-link-mobile touch-target w-full px-4 py-3 rounded-2xl text-left text-xs font-bold flex items-center justify-between text-slate-700 hover:bg-slate-100 transition">
+          <span>⚙️ Admin Dashboard</span>
+          <span class="text-[10px] text-slate-400">Panel Panitia</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================================================================== -->
+  <!-- WADAH UTAMA SELURUH HALAMAN                                          -->
+  <!-- ==================================================================== -->
+  <main id="main-container" class="flex-1 w-full">
+
+    <!-- ================================================================== -->
+    <!-- HALAMAN 1: HOME / LANDING PAGE (`/`) — Sesuai Screenshot 230031.png-->
+    <!-- ================================================================== -->
+    <section id="page-landing" class="page-view max-w-3xl mx-auto bg-white min-h-[calc(100dvh-62px)] shadow-sm border-x border-slate-200/70 flex flex-col justify-between page-animate">
+      <div>
+        <!-- Banner Gambar Carousel Atas -->
+        <div class="relative w-full h-72 sm:h-96 bg-emerald-950 overflow-visible">
+          <!-- [SPACE: GAMBAR CAROUSEL LANDING PAGE - GANTI URL DI ASET_GAMBAR_UI] -->
+          <img id="carousel-img" src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop" alt="Banner CGTK" class="w-full h-full object-cover transition-all duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10 pointer-events-none"></div>
+
+          <!-- Tombol Panah Kiri & Kanan Carousel -->
+          <button onclick="geserCarousel(-1)" aria-label="Slide Sebelumnya" class="touch-target absolute left-3.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-2 border-white/85 bg-black/25 hover:bg-black/50 text-white flex items-center justify-center backdrop-blur-xs transition active:scale-90">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button onclick="geserCarousel(1)" aria-label="Slide Berikutnya" class="touch-target absolute right-3.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-2 border-white/85 bg-black/25 hover:bg-black/50 text-white flex items-center justify-center backdrop-blur-xs transition active:scale-90">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
+
+          <!-- Indikator Titik Slide Carousel -->
+          <div id="carousel-dots" class="absolute bottom-11 inset-x-0 flex justify-center gap-1.5 z-10"></div>
+
+          <!-- Logo CGTK Besar Pas Tepat di Tengah Bawah Banner -->
+          <div class="absolute -bottom-8 inset-x-0 z-20 flex justify-center select-none pointer-events-none">
+            <div class="animate-float">
+              <!-- [SPACE: GAMBAR LOGO CGTK TENGAH BANNER (OPSIONAL JIKA PAKAI FILE PNG)] -->
+              <div class="cgtk-logo-text text-5xl sm:text-6xl flex items-center justify-center tracking-tighter">
+                <span class="text-[#1d3557]">C</span>
+                <span class="text-[#6d2e70]">G</span>
+                <span class="text-[#f0544f]">T</span>
+                <span class="text-[#f77f00]">K</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Area Sambutan dengan Watermark Diagonal "Campus Goes To Kampoeng" -->
+        <div class="watermark-bg px-6 sm:px-12 pt-16 pb-12">
+          <div class="watermark-text">
+            Campus<br>Goes<br>To<br>Kampoeng
+          </div>
+
+          <div class="relative z-10 max-w-lg">
+            <h1 class="font-display text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Selamat Datang !
+            </h1>
+            <p class="text-sm sm:text-base text-slate-700 mt-2 leading-snug font-medium">
+              Sepertinya anda belum memiliki akun<br>silahkan masuk atau daftar
+            </p>
+
+            <!-- Harga Tiket dari /settings/publik (Teks bebas, disembunyikan jika kosong) -->
+            <div id="landing-box-harga" class="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-fuchsia-50 border border-fuchsia-200 hidden">
+              <span class="text-xs font-bold text-slate-600">Tiket Acara:</span>
+              <span id="landing-teks-harga" class="text-sm font-black text-cgtk-magenta"></span>
+            </div>
+
+            <!-- Tombol Masuk atau Daftar di Landing Page -->
+            <div class="mt-5 flex flex-wrap items-center gap-3">
+              <button id="btn-landing-cta" onclick="navigasiKe('/login')" class="touch-target px-8 py-3 rounded-full bg-gradient-to-r from-[#5e2b63] to-[#c91878] hover:shadow-lg hover:shadow-fuchsia-500/25 text-white font-bold text-xs sm:text-sm shadow-md active:scale-95 transition">
+                Masuk atau Daftar &gt;
+              </button>
+              <button id="btn-landing-register" onclick="navigasiKe('/register')" class="touch-target px-6 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition">
+                Daftar Akun Baru
+              </button>
+            </div>
+          </div>
+
+          <!-- Rangkaian 4 Acara dari GET /events -->
+          <div class="relative z-10 mt-14 pt-8 border-t border-slate-200/80">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-display text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-400">Rangkaian Acara Resmi (GET /events)</h2>
+            </div>
+            <div id="landing-grid-events" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+          </div>
+
+          <!-- Grid Sponsor per Tier dari GET /sponsors?penempatan=landing -->
+          <div class="relative z-10 mt-10 pt-8 border-t border-slate-200/80 space-y-6">
+            <h2 class="font-display text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-400">Sponsor &amp; Mitra Resmi</h2>
+            
+            <!-- PLATINUM (Besar - 2 Kolom) -->
+            <div class="space-y-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Platinum Tier</span>
+              <div id="grid-sponsor-platinum" class="grid grid-cols-2 gap-3"></div>
+            </div>
+
+            <!-- GOLD (Sedang - 3 Kolom) -->
+            <div class="space-y-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Gold Tier</span>
+              <div id="grid-sponsor-gold" class="grid grid-cols-3 gap-2.5"></div>
+            </div>
+
+            <!-- SILVER (Kecil - 4 Kolom) -->
+            <div class="space-y-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Silver Tier</span>
+              <div id="grid-sponsor-silver" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- HALAMAN 2: LOGIN (`/login`) — Sesuai Screenshot 230054.png         -->
+    <!-- ================================================================== -->
+    <section id="page-login" class="page-view pool-bg min-h-[calc(100dvh-62px)] flex items-center justify-center p-4 py-12 hidden page-animate">
+      <div class="relative w-full max-w-md glass-card rounded-[36px] px-6 sm:px-10 pt-14 pb-10 shadow-2xl border border-white/70 mt-6">
+        
+        <!-- Logo CGTK Pas di Tengah Atas Kartu Login -->
+        <div class="absolute -top-9 inset-x-0 flex justify-center select-none pointer-events-none">
+          <div class="animate-float">
+            <div class="cgtk-logo-text text-5xl flex items-center justify-center tracking-tighter">
+              <span class="text-[#1d3557]">C</span>
+              <span class="text-[#6d2e70]">G</span>
+              <span class="text-[#f0544f]">T</span>
+              <span class="text-[#f77f00]">K</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mb-8">
+          <h1 class="font-display text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+            Account<br><span class="text-3xl sm:text-4xl">Login</span>
+          </h1>
+        </div>
+
+        <!-- Kotak Pesan Error (Ditampilkan Apa Adanya dari Server) -->
+        <div id="login-error-box" class="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700 hidden"></div>
+
+        <!-- Form Login Sesuai Desain Screenshot 230054.png -->
+        <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+          <div>
+            <label class="text-xs font-bold text-slate-800 block mb-1.5">Email</label>
+            <input type="email" id="login-email" placeholder="Masukkan Email Anda ( Ex : Example@email.com )" class="w-full touch-target px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-cgtk-magenta outline-none transition">
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-800 block mb-1.5">Kata Sandi</label>
+            <input type="password" id="login-password" placeholder="Masukkan Kata Sandi Anda" class="w-full touch-target px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-cgtk-magenta outline-none transition">
+          </div>
+
+          <div class="pt-2 flex items-center gap-2.5">
+            <button type="submit" class="flex-[1.6] touch-target py-3 rounded-2xl bg-gradient-to-r from-[#5e2b63] to-[#c91878] text-white font-bold text-sm shadow-md hover:opacity-95 active:scale-95 transition">
+              Login
+            </button>
+            <button type="button" onclick="navigasiKe('/register')" class="flex-1 touch-target py-3 rounded-2xl bg-gradient-to-r from-[#f77f00] to-[#d64500] text-white font-bold text-sm shadow-md hover:opacity-95 active:scale-95 transition">
+              Daftar
+            </button>
+          </div>
+        </form>
+
+        <!-- Tombol Sign in with Google (Supabase OAuth -> POST /auth/sinkron) -->
+        <div class="mt-5 flex justify-center">
+          <button type="button" onclick="loginDenganGoogle()" class="touch-target px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl shadow-xs flex items-center gap-2.5 text-xs font-bold text-slate-700 active:scale-95 transition">
+            <svg class="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            Sign in with Google
+          </button>
+        </div>
+
+        <!-- Simulator Cabang arahkan_ke Server (Menguji Aturan 2.1 Tanpa Hardcode) -->
+        <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+          <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">Simulasi Respons `arahkan_ke` dari Server Rafly:</span>
+          <div class="flex flex-wrap justify-center gap-1">
+            <button onclick="simulasiSinkronAuth('/register')" class="px-2 py-1 text-[10px] bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-600">Akun Baru (/register)</button>
+            <button onclick="simulasiSinkronAuth('/bayar')" class="px-2 py-1 text-[10px] bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-600">Belum Lunas (/bayar)</button>
+            <button onclick="simulasiSinkronAuth('/dashboard')" class="px-2 py-1 text-[10px] bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-600">Sudah Lunas (/dashboard)</button>
+            <button onclick="simulasiSinkronAuth('/admin')" class="px-2 py-1 text-[10px] bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-600">Divisi Admin (/admin)</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- HALAMAN 3: REGISTRASI + FORM BUILDER 6 TIPE (`/register`)          -->
+    <!-- Sesuai Screenshot 230105.png + Mendukung Penuh 6 Tipe Database!    -->
+    <!-- ================================================================== -->
+    <section id="page-register" class="page-view pool-bg min-h-[calc(100dvh-62px)] flex items-center justify-center p-4 py-10 hidden page-animate">
+      <div class="w-full max-w-lg glass-card rounded-[36px] px-6 sm:px-10 py-9 shadow-2xl border border-white/70">
+        
+        <h1 class="font-display text-3xl font-black text-center text-slate-900 mb-6">
+          Daftar
+        </h1>
+
+        <div id="register-error-box" class="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700 hidden"></div>
+
+        <form id="form-register-builder" onsubmit="kirimRegistrasi(event)" class="space-y-4">
+          <!-- 4 Field Bawaan Wajib Sesuai Spesifikasi Lembar Tugas -->
+          <div>
+            <label class="text-xs font-bold text-slate-800 block mb-1">Asal Sekolah <span class="text-rose-500">*</span></label>
+            <input type="text" id="reg-asal-sekolah" required placeholder="Contoh: SMAN 1 Pamekasan" class="w-full touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-cgtk-magenta outline-none">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="text-xs font-bold text-slate-800 block mb-1">Kelas <span class="text-rose-500">*</span></label>
+              <input type="text" id="reg-kelas" required placeholder="Contoh: XII IPA 2" class="w-full touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-cgtk-magenta outline-none">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-800 block mb-1">Target Jurusan <span class="text-rose-500">*</span></label>
+              <input type="text" id="reg-target-jurusan" required placeholder="Contoh: Teknik Informatika" class="w-full touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-cgtk-magenta outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-800 block mb-1">Kampus Impian <span class="text-rose-500">*</span></label>
+            <input type="text" id="reg-kampus-impian" required placeholder="Contoh: Institut Teknologi Bandung (ITB)" class="w-full touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-cgtk-magenta outline-none">
+          </div>
+
+          <!-- WADAH DINAMIS 6 TIPE FIELD DARI GET /form_fields -->
+          <!-- Mendukung penuh: TEKS, ANGKA, PILIHAN, PILIHAN_GANDA, TANGGAL, YA_TIDAK -->
+          <div id="wadah-form-builder" class="space-y-4 pt-3 border-t border-slate-200/70"></div>
+
+          <!-- Kotak Centang Eksplisit izin_bagi_data (Wajib Jelas & Tidak Dicentang Otomatis) -->
+          <div class="p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 mt-5">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" id="reg-izin-bagi-data" class="w-5 h-5 mt-0.5 accent-cgtk-magenta rounded cursor-pointer shrink-0">
+              <span class="text-xs font-semibold text-slate-800 leading-relaxed">
+                Saya bersedia data minat saya dilihat oleh kampus yang boothnya saya kunjungi.
+              </span>
+            </label>
+          </div>
+
+          <button type="submit" class="w-full touch-target py-3.5 rounded-2xl bg-gradient-to-r from-[#5e2b63] to-[#c91878] text-white font-extrabold text-xs sm:text-sm shadow-lg hover:opacity-95 active:scale-95 transition mt-4">
+            Simpan Pendaftaran &amp; Lanjut ke Pembayaran &rarr;
+          </button>
+        </form>
+
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- HALAMAN 4: PEMBAYARAN (`/bayar`)                                   -->
+    <!-- Sesuai Screenshot 230129.png (Terkunci) & 230118.png (Lengkap)     -->
+    <!-- ================================================================== -->
+    <section id="page-bayar" class="page-view min-h-[calc(100dvh-62px)] flex flex-col items-center justify-center hidden page-animate">
+      
+      <!-- Toolbar Penguji Keadaan 1 vs Keadaan 2 -->
+      <div class="w-full bg-slate-900 text-white px-4 py-2 text-center text-[11px] flex flex-wrap items-center justify-center gap-2">
+        <span class="font-bold text-slate-400">Uji Kondisi <code>GET /payments/cara-bayar</code>:</span>
+        <button onclick="ubahSimulasiProfilLengkap(false)" class="px-2.5 py-1 rounded bg-rose-600 font-bold hover:bg-rose-500 transition">Keadaan 1: Profil Belum Lengkap (Gembok)</button>
+        <button onclick="ubahSimulasiProfilLengkap(true)" class="px-2.5 py-1 rounded bg-emerald-600 font-bold hover:bg-emerald-500 transition">Keadaan 2: Profil Lengkap (Kode &amp; Link)</button>
+      </div>
+
+      <!-- KEADAAN 1: PROFIL BELUM LENGKAP (LINK TERKUNCI TOTAL — Screenshot 230129.png) -->
+      <div id="bayar-keadaan-terkunci" class="flex-1 w-full max-w-md mx-auto bg-white px-6 py-12 flex flex-col items-center justify-center hidden">
+        <!-- [SPACE: GAMBAR KARTU BLUR GEMBOK TERKUNCI] -->
+        <div class="relative w-full max-w-xs h-52 rounded-3xl bg-slate-200/90 border border-slate-300 shadow-inner flex items-center justify-center overflow-hidden mb-6">
+          <div class="w-5/6 h-36 border-4 border-white rounded-2xl p-4 flex items-center gap-4 filter blur-[3px] opacity-75 select-none">
+            <div class="w-16 h-16 rounded-full bg-white shrink-0"></div>
+            <div class="flex-1 space-y-2.5">
+              <div class="h-4 bg-white rounded w-3/4"></div>
+              <div class="h-4 bg-white rounded w-1/2"></div>
+            </div>
+          </div>
+
+          <!-- Ikon Gembok Hitam di Tengah -->
+          <div class="absolute z-10 w-14 h-16 rounded-2xl bg-black text-slate-200 flex items-center justify-center shadow-xl">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2a5 5 0 00-5 5v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7a5 5 0 00-5-5zm-3 5a3 3 0 016 0v3H9V7z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Daftar Field yang Belum Diisi (Merah Sesuai Screenshot 230129.png) -->
+        <div id="list-field-belum-diisi" class="w-full max-w-xs text-left space-y-1 mb-6"></div>
+
+        <!-- Tombol Lengkapi Profil > -->
+        <button onclick="navigasiKe('/register')" class="w-full max-w-xs touch-target py-3.5 px-6 bg-white hover:bg-slate-50 text-slate-900 font-display font-black text-lg rounded-full shadow-[0_6px_0_#94a3b8,0_10px_20px_rgba(0,0,0,0.15)] border border-slate-200 flex items-center justify-center gap-3 active:translate-y-0.5 transition">
+          <svg class="w-6 h-6 text-slate-900" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6-6h4v2h-4V8zm0 4h4v2h-4v-2z"/>
+          </svg>
+          <span>Lengkapi Profil &gt;</span>
+        </button>
+      </div>
+
+      <!-- KEADAAN 2: PROFIL SUDAH LENGKAP (Screenshot 230118.png) -->
+      <div id="bayar-keadaan-lengkap" class="flex-1 w-full pool-bg flex items-center justify-center p-4 py-10">
+        <div class="w-full max-w-md glass-card rounded-[36px] px-6 sm:px-9 py-9 shadow-2xl border border-white/70 text-center space-y-6">
+          
+          <div>
+            <h2 class="font-display text-xl sm:text-2xl font-black text-slate-900">Bayar Disini</h2>
+            <p id="bayar-nominal-tampil" class="font-display text-3xl sm:text-4xl font-black text-slate-900 mt-2 drop-shadow-xs"></p>
+          </div>
+
+          <!-- KODE REGISTRASI BESAR + TOMBOL SALIN BULAT -->
+          <div class="text-left">
+            <label class="text-xs font-extrabold text-slate-900 block mb-1.5 ml-2">Kode Pendaftaran</label>
+            <div class="flex items-center gap-2.5">
+              <div id="bayar-kode-registrasi" class="flex-1 h-14 rounded-full bg-slate-200/90 border border-slate-300 flex items-center justify-center font-mono text-xl sm:text-2xl font-black text-slate-900 tracking-wider shadow-inner select-all"></div>
+              <button onclick="salinKodePendaftaran()" title="Salin Kode Registrasi" class="w-14 h-14 rounded-full bg-slate-200 hover:bg-slate-300 border border-slate-300 flex items-center justify-center text-slate-800 shadow-xs active:scale-90 transition shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <rect x="9" y="9" width="10" height="10" rx="2" stroke-width="2"/>
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+            <p id="bayar-teks-petunjuk" class="text-[11px] font-semibold text-slate-600 mt-2 px-2"></p>
+          </div>
+
+          <!-- Tombol Buka Form Pembayaran (/payments/buka) + Stiker Maskot -->
+          <div class="relative pt-1 pb-4">
+            <a id="link-buka-pembayaran" href="#buka-form" target="_blank" rel="noopener" onclick="handleKlikBukaFormBayar()" class="flex items-center justify-center w-full h-14 rounded-full bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-900 font-extrabold text-sm shadow-xs transition active:scale-95">
+              Buka Form Pembayaran &rarr;
+            </a>
+
+            <!-- [SPACE: GAMBAR STIKER MASKOT PEMBAYARAN SESUAI SCREENSHOT 230118.png] -->
+            <div class="w-24 h-24 mx-auto -mt-3 flex items-center justify-center select-none pointer-events-none animate-float">
+              <img id="bayar-maskot-img" src="" alt="Maskot Bayar" class="w-24 h-24 object-contain hidden">
+              <div id="bayar-maskot-fallback" class="w-20 h-20 rounded-full bg-amber-100 border-4 border-white shadow-md flex items-center justify-center text-4xl">
+                😌🙌
+              </div>
+            </div>
+
+            <p class="text-xs font-extrabold text-rose-600 mt-2 leading-tight">
+              *Batas Akhir Pembayaran<br>
+              <span id="bayar-batas-akhir"></span>
+            </p>
+          </div>
+
+          <!-- Pesan Menunggu 1x24 Jam -->
+          <div id="box-menunggu-verifikasi" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left hidden">
+            <p class="text-xs font-extrabold text-emerald-900">Sudah bayar?</p>
+            <p class="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+              Panitia akan memeriksa dan menandai dalam 1&times;24 jam. Cek berkala di sini atau buka <button onclick="bukaModalCekStatusPublik()" class="underline font-bold">/cek-status</button>.
+            </p>
+          </div>
+
+          <!-- 4 Kartu Abu-abu Ber-gembok Sebelum LUNAS -->
+          <div class="pt-4 border-t border-slate-100 text-left">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Fitur Terbuka Setelah Lunas:</span>
+            <div class="grid grid-cols-4 gap-2">
+              <div class="p-2.5 rounded-2xl bg-slate-100 text-slate-400 text-center border border-slate-200">
+                <span class="block text-sm">🔒</span>
+                <span class="text-[10px] font-bold">Kuis</span>
+              </div>
+              <div class="p-2.5 rounded-2xl bg-slate-100 text-slate-400 text-center border border-slate-200">
+                <span class="block text-sm">🔒</span>
+                <span class="text-[10px] font-bold">Paspor</span>
+              </div>
+              <div class="p-2.5 rounded-2xl bg-slate-100 text-slate-400 text-center border border-slate-200">
+                <span class="block text-sm">🔒</span>
+                <span class="text-[10px] font-bold">Misi</span>
+              </div>
+              <div class="p-2.5 rounded-2xl bg-slate-100 text-slate-400 text-center border border-slate-200">
+                <span class="block text-sm">🔒</span>
+                <span class="text-[10px] font-bold">QR</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- HALAMAN 5: DASHBOARD PESERTA (`/dashboard`)                        -->
+    <!-- Sesuai Screenshot 230150.png + Desain Khusus HP, Tablet, Desktop   -->
+    <!-- ================================================================== -->
+    <section id="page-dashboard" class="page-view max-w-4xl mx-auto p-3 sm:p-6 hidden page-animate">
+      <div class="bg-white rounded-[32px] shadow-sm border border-slate-200 p-4 sm:p-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          
+          <!-- KOLOM KIRI (HP: Atas, Tablet/Desktop: Kiri 6 Kolom) -->
+          <div class="md:col-span-6 space-y-6">
+            
+            <!-- Banner Air Kolam Biru + Lingkaran Foto Profil -->
+            <div class="relative">
+              <!-- [SPACE: GAMBAR BANNER AIR KOLAM DASHBOARD PESERTA] -->
+              <div id="space-dashboard-banner" class="w-full h-40 sm:h-48 rounded-[28px] pool-bg shadow-inner overflow-hidden">
+                <img id="dash-banner-img" src="" alt="Banner Dashboard" class="w-full h-full object-cover hidden">
+              </div>
+              
+              <div class="flex items-end gap-4 px-3 sm:px-4 -mt-14 sm:-mt-16 relative z-10">
+                <!-- [SPACE: FOTO PROFIL PESERTA DI DASHBOARD] -->
+                <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-slate-300 border-[6px] border-white shadow-md shrink-0 overflow-hidden flex items-center justify-center text-3xl font-black text-slate-500">
+                  <img id="dash-foto-peserta" src="" alt="Foto Peserta" class="w-full h-full object-cover hidden">
+                  <span id="dash-inisial-peserta">BR</span>
+                </div>
+                <div class="pb-1.5">
+                  <h1 id="dash-nama-peserta" class="font-display text-xl sm:text-2xl font-black text-slate-900 leading-tight">Budi Rokapalak</h1>
+                  <p id="dash-kelompok-peserta" class="text-xs font-extrabold text-slate-800">Kelompok : Pluto</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bar Progres Level dengan Ikon Trisula (Sesuai Screenshot 230150.png) -->
+            <div class="pt-1 px-1">
+              <div class="flex items-center justify-between mb-1.5 pl-7">
+                <span id="dash-teks-level" class="font-display text-base font-black text-slate-900 uppercase">LEVEL 3</span>
+                <span id="dash-teks-kurang-xp" class="text-xs font-extrabold text-slate-800">Keep Going !</span>
+              </div>
+              <div class="relative flex items-center">
+                <div class="absolute -left-1 z-10 w-8 h-8 flex items-center justify-center">
+                  <svg viewBox="0 0 36 36" class="w-7 h-7 drop-shadow-xs -rotate-45">
+                    <path d="M4 18 L18 18 M12 10 L26 10 L32 6 M12 18 L28 18 L34 18 M12 26 L26 26 L32 30" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="w-full h-3.5 bg-slate-200 rounded-full overflow-hidden pl-4">
+                  <div id="dash-bar-xp" class="h-full rounded-full transition-all duration-500" style="width: 68%; background: linear-gradient(90deg, #f43f5e 0%, #f43f5e 80%, #831843 80%, #831843 90%, #1e3a8a 90%, #1e3a8a 100%);"></div>
+                </div>
+              </div>
+              <p class="text-[11px] font-bold text-slate-500 mt-1.5 pl-7">340 XP &middot; kurang 110 XP &rarr; Navigator</p>
+            </div>
+
+            <!-- Sesi Sedang Berlangsung (Badge LIVE dari sesi.status === 'ACTIVE') -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">Sedang Berlangsung</span>
+              <div id="dash-box-sesi-live" class="flex items-center justify-between"></div>
+            </div>
+
+            <!-- Check-in Poster Booth (Modul 19b - Membuka Materi Tanpa XP) -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div>
+                <h3 class="text-xs font-extrabold text-slate-900">Check-in Poster Booth (Buka Materi PPT/PDF)</h3>
+                <p class="text-[11px] text-slate-500">Ketik kode poster di meja booth (POST /booths/checkin)</p>
+              </div>
+              <div class="flex gap-2">
+                <input type="text" id="dash-input-kode-booth" placeholder="Contoh: TI-482" class="flex-1 touch-target px-3 py-1.5 rounded-xl bg-white border border-slate-300 font-mono text-xs uppercase outline-none">
+                <button onclick="checkinBoothPeserta()" class="touch-target px-4 py-1.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition">
+                  Buka Materi
+                </button>
+              </div>
+              <div id="dash-hasil-materi-booth" class="hidden space-y-1.5 pt-2 border-t border-slate-200"></div>
+            </div>
+
+          </div>
+
+          <!-- KOLOM KANAN: YOUR QR CODE BESAR & MENU 6 FITUR PESERTA -->
+          <div class="md:col-span-6 flex flex-col items-center justify-center space-y-6 pt-2">
+            <div class="text-center">
+              <h2 class="font-display text-lg font-black text-slate-900 tracking-wide inline-block border-b-4 border-sky-500 pb-0.5">
+                YOUR QR CODE
+              </h2>
+            </div>
+
+            <!-- Bingkai QR Code Besar Kontras Tinggi (Tanpa Mencetak Teks isi_qr!) -->
+            <div class="p-5 sm:p-6 bg-white rounded-[28px] border-[3px] border-slate-300 shadow-[0_8px_0_#cbd5e1] flex flex-col items-center justify-center">
+              <div id="qrcode-canvas" class="p-2 bg-white"></div>
+            </div>
+
+            <p class="text-xs font-semibold text-slate-500 text-center">Tunjukkan QR ini ke panitia pintu masuk atau penjaga booth</p>
+
+            <!-- 6 Tombol Menu Peserta -->
+            <div class="w-full grid grid-cols-3 gap-2.5 pt-2">
+              <button onclick="bukaFiturPeserta('KUIS')" class="touch-target p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-center transition">
+                <span class="text-lg block">📝</span>
+                <span class="text-xs font-bold text-slate-800">Kuis</span>
+              </button>
+              <button onclick="bukaFiturPeserta('PASPOR')" class="touch-target p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-center transition">
+                <span class="text-lg block">🛂</span>
+                <span class="text-xs font-bold text-slate-800">Paspor</span>
+              </button>
+              <button onclick="bukaFiturPeserta('MISI')" class="touch-target p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-center transition">
+                <span class="text-lg block">🎯</span>
+                <span class="text-xs font-bold text-slate-800">Misi</span>
+              </button>
+              <button onclick="bukaFiturPeserta('PERINGKAT')" class="touch-target p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-center transition">
+                <span class="text-lg block">🏆</span>
+                <span class="text-xs font-bold text-slate-800">Peringkat</span>
+              </button>
+              <button onclick="bukaFiturPeserta('RAPOR')" class="touch-target p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-center transition">
+                <span class="text-lg block">📊</span>
+                <span class="text-xs font-bold text-slate-800">Rapor</span>
+              </button>
+              <button onclick="bukaFiturPeserta('JADWAL')" class="touch-target p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-center transition">
+                <span class="text-lg block">📅</span>
+                <span class="text-xs font-bold text-slate-800">Jadwal</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- HALAMAN PROFIL, NAIK LEVEL & AKTIVITAS PESERTA (`/profil`)         -->
+    <!-- ================================================================== -->
+    <section id="page-profil" class="page-view max-w-2xl mx-auto p-4 py-8 hidden page-animate">
+      <div class="bg-white rounded-[32px] border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+        
+        <div class="flex flex-col sm:flex-row items-center gap-4 pb-6 border-b border-slate-100 text-center sm:text-left">
+          <div class="w-20 h-20 rounded-full bg-cgtk-cyan text-white font-black text-3xl flex items-center justify-center shadow-lg border-4 border-white ring-2 ring-cgtk-cyan/40 shrink-0">
+            F
+          </div>
+          <div class="flex-1">
+            <h1 class="font-display text-2xl font-black text-slate-900">Budi Rokapalak</h1>
+            <p class="text-xs font-semibold text-slate-500">SMAN 1 Pamekasan &middot; Kelompok : Pluto</p>
+            <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-extrabold text-emerald-700">
+              <span>Lv.3 Penyusur Kampus</span>
+              <span>&bull;</span>
+              <span>340 XP</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex justify-between items-center text-xs font-extrabold">
+            <span class="text-slate-700">Progres Menuju Level 4 (Navigator)</span>
+            <span class="text-cgtk-magenta">Kurang 110 XP lagi</span>
+          </div>
+          <div class="w-full h-3.5 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-rose-500 via-fuchsia-700 to-indigo-900" style="width: 68%"></div>
+          </div>
+          <p class="text-[11px] font-semibold text-slate-600">
+            🎁 Hadiah Level Berikutnya: <strong>Lagu Profil &amp; Bingkai Perak</strong>
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <h2 class="font-display text-xs font-extrabold uppercase tracking-wider text-slate-400">Aktivitas Peserta &amp; Perolehan XP</h2>
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+              <div>
+                <p class="font-bold text-slate-900">Kunjungan Booth Teknik Informatika</p>
+                <p class="text-[11px] text-slate-500">Kategori: Aktif Bertanya &middot; Expo Jurusan</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-black">+20 XP</span>
+            </div>
+            <div class="flex justify-between items-center p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+              <div>
+                <p class="font-bold text-slate-900">Presensi Sesi Talkshow Alumni</p>
+                <p class="text-[11px] text-slate-500">Aula Utama &middot; Sesi #5</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-black">+20 XP</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button onclick="navigasiKe('/dashboard')" class="flex-1 touch-target py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition">
+            &larr; Kembali ke Dashboard
+          </button>
+          <button onclick="navigasiKe('/')" class="touch-target px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs transition">
+            Ke Home
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- HALAMAN 6: SCANNER PRESENSI (`/scanner`)                           -->
+    <!-- Sesuai Arahan Rafly & Screenshot 230015.png + 111856.png:          -->
+    <!-- 1. Tampilan awal MURNI HANYA SCAN KAMERA (100dvh, #1c1c1c,         -->
+    <!--    tanpa elemen/tombol lain yang ramai).                           -->
+    <!-- 2. Jika QR terdeteksi atau layar kamera diketuk (peserta tidak     -->
+    <!--    bisa scan), muncul POP-UP sesuai desain `Scanner-Pop-Up`        -->
+    <!--    (Saklar Mode Cepat, Kartu Budi Rokapalak, & 2 Tombol Manual).   -->
+    <!-- ================================================================== -->
+    <section id="page-scanner" class="page-view fixed inset-0 z-50 w-screen h-dvh overflow-hidden bg-[#1c1c1c] text-white select-none hidden">
+      
+      <!-- LAPIS 1: MURNI SCAN KAMERA BELAKANG SATU LAYAR PENUH TANPA ELEMEN LAIN -->
+      <video id="scanner-video" onclick="bukaOverlayScannerPopUp()" class="absolute inset-0 w-full h-full object-cover z-0 cursor-pointer" playsinline muted></video>
+      <canvas id="scanner-canvas" class="hidden"></canvas>
+
+      <!-- Area Klik Layar Kamera (Apabila tidak bisa scan / disentuh panitia, munculkan Pop-Up) -->
+      <div onclick="bukaOverlayScannerPopUp()" class="absolute inset-0 z-10 cursor-pointer"></div>
+
+      <!-- LAPIS 2: OVERLAY POP-UP (`Scanner-Pop-Up` — Screenshot 2026-10-23 111856.png) -->
+      <!-- Muncul saat peserta selesai discan atau saat layar diketuk karena tidak dapat scan -->
+      <div id="scanner-popup-overlay" class="fixed inset-0 z-20 bg-black/95 flex flex-col justify-between p-5 hidden popup-animate">
+        
+        <!-- POJOK KIRI ATAS POP-UP: Saklar Mode Cepat (Sesuai Screenshot 111856.png) -->
+        <div class="flex items-center justify-between">
+          <label class="inline-flex items-center gap-2.5 cursor-pointer touch-target">
+            <input type="checkbox" id="checkbox-mode-cepat" onchange="toggleModeCepatScanner()" class="sr-only peer">
+            <div class="w-12 h-6 bg-white rounded-full relative transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-slate-300 after:shadow-md after:transition-all peer-checked:bg-emerald-500 peer-checked:after:translate-x-6 peer-checked:after:bg-white"></div>
+            <span class="text-xs font-bold text-white tracking-wide">Mode Cepat</span>
+          </label>
+
+          <!-- Tombol Tutup Pop-Up (Kembali ke Kamera Murni) & Keluar Scanner -->
+          <div class="flex items-center gap-2">
+            <button onclick="tutupOverlayScannerPopUp()" class="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white/90 transition">
+              Kamera
+            </button>
+            <button onclick="keluarDariScanner()" aria-label="Keluar Scanner" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white/80 flex items-center justify-center text-base font-bold transition">
+              &times;
+            </button>
+          </div>
+        </div>
+
+        <!-- TENGAH POP-UP: KARTU PUTIH BUDI ROKAPALAK + 3 OPSI XP -->
+        <div class="flex-1 flex items-center justify-center my-2">
+          <div id="scanner-popup-card" class="w-full max-w-[330px] bg-white text-slate-900 rounded-[34px] px-6 py-7 shadow-2xl">
+            <div class="text-center mb-5">
+              <h2 id="popup-scan-nama" class="font-display text-2xl font-black text-slate-900 leading-tight">Budi Rokapalak</h2>
+              <p id="popup-scan-kelompok" class="text-xs font-extrabold text-slate-900 mt-0.5">Kelompok : Pluto</p>
+            </div>
+
+            <!-- 3 Tombol Opsi XP (Nilai XP dari Pengaturan Server, Tidak Hardcode!) -->
+            <div class="space-y-3.5">
+              
+              <!-- Tombol 1: HADIR (+10 XP) -->
+              <button onclick="pilihOpsiXPScanner('HADIR')" class="w-full touch-target relative flex items-center justify-between pl-14 pr-4 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200/80 shadow-[0_4px_0_#1d3557] border border-slate-200 active:translate-y-0.5 transition">
+                <!-- [SPACE: GAMBAR MASKOT 1 (HADIR) SESUAI SCREENSHOT 111856.png] -->
+                <div class="absolute -left-1 w-12 h-12 rounded-full bg-indigo-950 border-2 border-white shadow-md flex items-center justify-center overflow-hidden">
+                  <img id="img-maskot-hadir" src="" alt="Hadir" class="w-full h-full object-cover hidden">
+                  <span id="fallback-maskot-hadir" class="text-2xl">😃</span>
+                </div>
+                <span class="font-display text-sm font-black text-slate-900 tracking-wide">HADIR</span>
+                <span id="label-xp-hadir" class="xp-outline-text text-sm font-black">+10 XP</span>
+              </button>
+
+              <!-- Tombol 2: AKTIF (+20 XP) -->
+              <button onclick="pilihOpsiXPScanner('AKTIF')" class="w-full touch-target relative flex items-center justify-between pl-14 pr-4 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200/80 shadow-[0_4px_0_#6d2e70] border border-slate-200 active:translate-y-0.5 transition">
+                <!-- [SPACE: GAMBAR MASKOT 2 (AKTIF) SESUAI SCREENSHOT 111856.png] -->
+                <div class="absolute -left-1 w-12 h-12 rounded-full bg-purple-950 border-2 border-white shadow-md flex items-center justify-center overflow-hidden">
+                  <img id="img-maskot-aktif" src="" alt="Aktif" class="w-full h-full object-cover hidden">
+                  <span id="fallback-maskot-aktif" class="text-2xl">😁</span>
+                </div>
+                <span class="font-display text-sm font-black text-slate-900 tracking-wide">AKTIF</span>
+                <span id="label-xp-aktif" class="xp-outline-text text-sm font-black">+20 XP</span>
+              </button>
+
+              <!-- Tombol 3: SANGAT AKTIF (+30 XP) -->
+              <button onclick="pilihOpsiXPScanner('SANGAT_AKTIF')" class="w-full touch-target relative flex items-center justify-between pl-14 pr-4 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200/80 shadow-[0_4px_0_#f0544f] border border-slate-200 active:translate-y-0.5 transition">
+                <!-- [SPACE: GAMBAR MASKOT 3 (SANGAT AKTIF) SESUAI SCREENSHOT 111856.png] -->
+                <div class="absolute -left-1 w-12 h-12 rounded-full bg-rose-950 border-2 border-white shadow-md flex items-center justify-center overflow-hidden">
+                  <img id="img-maskot-sangat-aktif" src="" alt="Sangat Aktif" class="w-full h-full object-cover hidden">
+                  <span id="fallback-maskot-sangat-aktif" class="text-2xl">🤩</span>
+                </div>
+                <span class="font-display text-sm font-black text-slate-900 tracking-wide">SANGAT AKTIF</span>
+                <span id="label-xp-sangat-aktif" class="xp-outline-text text-sm font-black">+30 XP</span>
+              </button>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- BAWAH POP-UP: 2 TOMBOL KAPSUL PUTIH PERSIS SCREENSHOT 111856.png -->
+        <div class="flex flex-col items-center gap-3 pb-3">
+          <button onclick="bukaModalKetikKode()" class="w-64 touch-target py-2.5 px-6 bg-white hover:bg-slate-100 text-slate-950 font-display font-bold text-xs rounded-2xl shadow-lg active:scale-95 transition">
+            Ketik Kode Manual
+          </button>
+          <button onclick="bukaModalManual()" class="w-48 touch-target py-2.5 px-6 bg-white hover:bg-slate-100 text-slate-950 font-display font-bold text-xs rounded-2xl shadow-lg active:scale-95 transition">
+            Cari Nama
+          </button>
+        </div>
+
+      </div>
+
+      <!-- OVERLAY HASIL 6 CABANG SATU LAYAR PENUH (HIJAU, KUNING, ORANYE, MERAH) -->
+      <div id="scanner-result-overlay" onclick="tutupHasilScanNormal()" class="fixed inset-0 z-40 flex flex-col items-center justify-center p-6 text-center hidden cursor-pointer">
+        <h1 id="scan-res-kode" class="font-display text-3xl sm:text-4xl font-black tracking-tight"></h1>
+        <p id="scan-res-pesan" class="text-base sm:text-xl font-bold mt-2 max-w-md"></p>
+        <button id="btn-tutup-popup-scan" onclick="tutupHasilScanNormal()" class="mt-6 touch-target px-8 py-3 bg-white text-slate-950 font-black rounded-full text-xs shadow-xl hidden">
+          Tutup
+        </button>
+      </div>
+
+      <!-- OVERLAY KAMERA TERKUNCI JIKA SESI CLOSED -->
+      <div id="scanner-locked-overlay" class="fixed inset-0 z-30 bg-black/95 flex flex-col items-center justify-center p-6 text-center hidden">
+        <span class="text-4xl mb-2">🔒</span>
+        <h2 class="font-display text-xl font-black text-white">Sesi Sudah Ditutup</h2>
+        <p class="text-xs text-neutral-400 mt-1 max-w-xs">Kamera scanner terkunci otomatis karena status sesi bukan ACTIVE.</p>
+        <button onclick="keluarDariScanner()" class="mt-6 touch-target px-6 py-2.5 bg-white text-black font-extrabold rounded-full text-xs">
+          Kembali
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- HALAMAN 7: ADMIN DASHBOARD LENGKAP (`/admin`)                      -->
+    <!-- ================================================================== -->
+    <section id="page-admin" class="page-view max-w-5xl mx-auto p-4 sm:p-6 space-y-6 hidden page-animate">
+      
+      <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="font-display text-xl sm:text-2xl font-black text-slate-900">Admin Dashboard CGTK 2027</h1>
+          <p class="text-xs text-slate-500">Menu dirender berdasarkan daftar izin dari <code>GET /auth/izin</code></p>
+        </div>
+        <div id="admin-badges-izin" class="flex flex-wrap gap-1"></div>
+      </div>
+
+      <!-- BARIS 1: TANDAI LUNAS SATUAN & MASSAL -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-4">
+          <h2 class="font-display text-base font-extrabold text-slate-900">Tandai Lunas — Cara 1 (Satuan)</h2>
+          <div class="flex gap-2">
+            <input type="text" id="admin-satuan-kode" value="CGTK-K7M2QX" placeholder="CGTK-______" class="flex-1 touch-target px-3.5 py-2 rounded-xl border border-slate-300 font-mono text-xs uppercase outline-none focus:border-slate-900">
+            <button onclick="cariKodeSatuanAdmin()" class="touch-target px-5 bg-slate-900 text-white font-bold rounded-xl text-xs">Cari</button>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+            <div>
+              <p id="satuan-nama-peserta" class="text-sm font-extrabold text-slate-900">Budi Santoso &middot; SMAN 1 Pamekasan</p>
+              <p id="satuan-status-peserta" class="text-xs font-semibold text-amber-700">Status: Menunggu Pembayaran</p>
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-slate-600 block mb-1">Catatan (Opsional)</label>
+              <input type="text" id="satuan-catatan-admin" placeholder="Tunai 12 Des, diterima Rina" class="w-full touch-target px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs outline-none">
+            </div>
+            <button onclick="tandaiLunasSatuanAdmin()" class="w-full touch-target py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow transition">
+              ✅ TANDAI LUNAS (POST /payments/admin/tandai-lunas)
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-4">
+          <h2 class="font-display text-base font-extrabold text-slate-900">Tandai Lunas — Cara 2 (Massal / Borongan)</h2>
+          <p class="text-xs text-slate-500">Tempel kode registrasi di sini, satu per baris:</p>
+          <textarea id="admin-massal-textarea" rows="3" class="w-full p-3 rounded-2xl border border-slate-300 font-mono text-xs outline-none focus:border-slate-900">CGTK-K7M2QX
+CGTK-P3R8WZ
+CGTK-M2N5TY</textarea>
+          <button onclick="prosesTandaiLunasMassal()" class="w-full touch-target py-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl text-xs shadow transition">
+            Proses Kode Massal (POST /payments/admin/tandai-lunas-massal)
+          </button>
+
+          <div id="box-hasil-massal-admin" class="hidden space-y-3 pt-3 border-t border-slate-100">
+            <p id="massal-ringkasan-teks" class="text-xs font-extrabold"></p>
+            <div id="massal-rincian-baris" class="space-y-1.5 max-h-40 overflow-y-auto"></div>
+            <div id="box-massal-gagal" class="p-3 rounded-xl bg-rose-50 border border-rose-200 hidden">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-[11px] font-extrabold text-rose-800">Kode Gagal (Bisa Disalin):</span>
+                <button onclick="salinKodeGagalMassal()" class="text-[11px] font-black text-rose-700 underline">Salin Kode Gagal</button>
+              </div>
+              <textarea id="textarea-kode-gagal" readonly rows="2" class="w-full p-2 bg-white border border-rose-200 rounded-lg font-mono text-xs text-rose-900"></textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BARIS 2: FORM BUILDER ADMIN LIVE & PENGUMUMAN DARURAT LIVE -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-4">
+          <div>
+            <h2 class="font-display text-base font-extrabold text-slate-900">Form Builder Admin (Tambah Field Pendaftaran)</h2>
+            <p class="text-xs text-slate-500">Pertanyaan baru langsung tampil di halaman <code>/register</code></p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <input type="text" id="fb-admin-kunci" placeholder="kunci (huruf_kecil)" class="touch-target px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono">
+            <input type="text" id="fb-admin-label" placeholder="Label Pertanyaan" class="touch-target px-3 py-2 rounded-xl border border-slate-300 text-xs">
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <select id="fb-admin-tipe" class="touch-target px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+              <option value="TEKS">TEKS</option>
+              <option value="ANGKA">ANGKA</option>
+              <option value="PILIHAN">PILIHAN (Dropdown)</option>
+              <option value="PILIHAN_GANDA">PILIHAN_GANDA (Checkbox)</option>
+              <option value="TANGGAL">TANGGAL</option>
+              <option value="YA_TIDAK">YA_TIDAK (Saklar)</option>
+            </select>
+            <input type="text" id="fb-admin-opsi" placeholder="Opsi pisah koma (jika pilihan)" class="touch-target px-3 py-2 rounded-xl border border-slate-300 text-xs">
+          </div>
+          <button onclick="tambahFieldFormBuilderAdmin()" class="w-full touch-target py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl text-xs transition">
+            + Tambah Pertanyaan (POST /form_fields/admin)
+          </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-4">
+          <div>
+            <h2 class="font-display text-base font-extrabold text-slate-900">Kirim Pengumuman (Divisi Administrasi)</h2>
+            <p class="text-xs text-slate-500">Endpoint: <code>POST /announcements/admin</code></p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <input type="text" id="ann-admin-judul" placeholder="Judul Pengumuman" class="sm:col-span-2 touch-target px-3 py-2 rounded-xl border border-slate-300 text-xs">
+            <select id="ann-admin-tingkat" class="touch-target px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-white">
+              <option value="DARURAT">🚨 DARURAT</option>
+              <option value="BIASA">📢 BIASA</option>
+            </select>
+          </div>
+          <textarea id="ann-admin-isi" rows="2" placeholder="Isi pengumuman untuk peserta..." class="w-full p-3 rounded-xl border border-slate-300 text-xs outline-none"></textarea>
+          <button onclick="kirimPengumumanAdmin()" class="w-full touch-target py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-xl text-xs shadow transition">
+            Kirim Pengumuman Sekarang
+          </button>
+        </div>
+
+      </div>
+
+      <!-- BARIS 3: DAFTAR BELUM LUNAS -->
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="font-display text-base font-extrabold text-slate-900">Daftar Peserta Belum Lunas (Profil Lengkap)</h2>
+            <p class="text-xs text-slate-500">Endpoint: <code>GET /payments/admin/belum-lunas</code></p>
+          </div>
+          <div class="flex gap-2">
+            <input type="text" id="cari-belum-lunas" oninput="renderTabelBelumLunas()" placeholder="Cari nama / sekolah..." class="touch-target px-3 py-1.5 rounded-xl border border-slate-300 text-xs outline-none">
+            <button onclick="eksporCSVBelumLunas()" class="touch-target px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs">
+              Ekspor CSV
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-400 uppercase text-[10px]">
+                <th class="py-2.5 px-3">Kode</th>
+                <th class="py-2.5 px-3">Nama Peserta</th>
+                <th class="py-2.5 px-3">Asal Sekolah</th>
+                <th class="py-2.5 px-3">Status Profil</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-belum-lunas" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BARIS 4: SAKLAR SESI & EKSPOR LPJ 6 SHEET -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-4">
+          <div>
+            <h2 class="font-display text-base font-extrabold text-slate-900">Saklar Sesi (Wajib Konfirmasi Saat Menutup)</h2>
+            <p class="text-xs text-slate-500">Endpoint: <code>PATCH /events/sessions/admin/:id/saklar</code></p>
+          </div>
+          <div id="admin-list-saklar-sesi" class="space-y-3"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs flex flex-col justify-between space-y-4">
+          <div>
+            <h2 class="font-display text-base font-extrabold text-slate-900">Ekspor LPJ Resmi (.xlsx — Dirakit di Browser)</h2>
+            <p class="text-xs text-slate-500 mt-1">Mengambil JSON dari <code>GET /exports/lpj</code> lalu merakit 6 sheet (Ringkasan, Data Peserta + Form Builder, Presensi, Kunjungan Booth, Rekap XP, Log Perubahan) menggunakan SheetJS.</p>
+          </div>
+          <button onclick="unduhLPJExcelBrowser()" class="w-full touch-target py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl text-xs shadow-lg transition">
+            📥 Unduh LPJ_CGTK_2027.xlsx (6 Sheet)
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================================================================== -->
+  <!-- FOOTER GLOBAL + SPONSOR FOOTER (OTOMATIS DISEMBUNYIKAN DI /scanner)  -->
+  <!-- ==================================================================== -->
+  <footer id="global-footer" class="bg-white border-t border-slate-200 py-6 px-4 text-center text-xs text-slate-500">
+    <div class="max-w-5xl mx-auto space-y-4">
+      <div id="footer-sponsors" class="flex flex-wrap items-center justify-center gap-3"></div>
+      <p>&copy; 2027 CGTK — Campus Goes To Kampoeng. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ==================================================================== -->
+  <!-- ARSITEKTUR BACKEND RAFLY (`src/lib/api.ts`, `supabase.ts`, `kait.ts`) -->
+  <!-- ==================================================================== -->
+  <script>
+    // =========================================================================
+    // [SPACE PENANDA 1: VARIABEL .env & SERVER MILIK RAFLY PRATAMA]
+    // Isi ruang kosong di bawah ini setelah menerima kredensial dari Rafly.
+    // =========================================================================
+    const ENV_RAFLY = {
+      VITE_SUPABASE_URL: "",      // <-- [SPACE: Minta ke Rafly -> https://xxxx.supabase.co]
+      VITE_SUPABASE_ANON_KEY: "", // <-- [SPACE: Minta ke Rafly -> eyJhbGci...]
+      VITE_API_BASE: "",          // <-- [SPACE: Minta ke Rafly -> https://cgtk.my.id/api/v1]
+      VITE_SENTRY_DSN: ""         // <-- [SPACE: Opsional dari Rafly]
+    };
+
+    // =========================================================================
+    // [SPACE PENANDA 2: ATRIBUT GAMBAR SEMENTARA UI/UX]
+    // Ganti URL di bawah ini saat file gambar final dari tim desain UI/UX siap.
+    // =========================================================================
+    const ASET_GAMBAR_UI = {
+      CAROUSEL_LANDING: [
+        // <-- [SPACE: Ganti dengan path/URL gambar banner Landing Page]
+        "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1200&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1200&auto=format&fit=crop"
+      ],
+      AVATAR_HEADER_URL: "",         // <-- [SPACE: Ganti jika lingkaran profil memakai foto]
+      IKON_TRISULA_URL: "",          // <-- [SPACE: Ganti jika memakai PNG ikon trisula]
+      BANNER_KOLAM_DASHBOARD: "",    // <-- [SPACE: Ganti jika memakai gambar air kolam khusus]
+      FOTO_PESERTA_DASHBOARD: "",    // <-- [SPACE: Ganti dengan foto profil peserta dari API]
+      STIKER_MASKOT_BAYAR: "",       // <-- [SPACE: Ganti dengan stiker maskot halaman bayar]
+      MASKOT_SCAN_HADIR: "",         // <-- [SPACE: Ganti dengan ikon maskot HADIR di Scanner Pop-Up]
+      MASKOT_SCAN_AKTIF: "",         // <-- [SPACE: Ganti dengan ikon maskot AKTIF di Scanner Pop-Up]
+      MASKOT_SCAN_SANGAT_AKTIF: ""   // <-- [SPACE: Ganti dengan ikon maskot SANGAT AKTIF di Scanner Pop-Up]
+    };
+
+    // =========================================================================
+    // MODUL `src/lib/api.ts` — SATU-SATUNYA PINTU KE BACKEND RAFLY
+    // =========================================================================
+    function pesanDari(e) {
+      if (e && typeof e === "object" && e.pesan) return e.pesan;
+      if (e instanceof Error) return e.message;
+      return String(e);
+    }
+
+    const api = {
+      async request(method, endpoint, body = null) {
+        if (!ENV_RAFLY.VITE_API_BASE) {
+          return { simulasiLokal: true, endpoint, body };
+        }
+        const token = localStorage.getItem("cgtk_supabase_access_token") || "";
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`${ENV_RAFLY.VITE_API_BASE}${endpoint}`, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : null
+        });
+        if (res.status === 204) return null;
+        const json = await res.json();
+        if (!res.ok || json.sukses === false) {
+          throw json.error || { kode: "ERROR", pesan: "Permintaan gagal diproses" };
+        }
+        return json.data;
+      },
+      get(endpoint) { return this.request("GET", endpoint); },
+      post(endpoint, body) { return this.request("POST", endpoint, body); },
+      patch(endpoint, body) { return this.request("PATCH", endpoint, body); },
+      put(endpoint, body) { return this.request("PUT", endpoint, body); },
+      delete(endpoint) { return this.request("DELETE", endpoint); }
+    };
+
+    // =========================================================================
+    // STATE DATA DINAMIS (MENGIKUTI STRUKTUR 04-API-CONTRACT.md)
+    // =========================================================================
+    let statePengaturanPublik = {
+      xp_booth_hadir: 10,
+      xp_booth_aktif: 20,
+      xp_booth_sangat_aktif: 30,
+      xp_booth_max: 30,
+      max_edit_profil: 2,
+      max_percobaan_kuis: 3,
+      jumlah_pemenang: 3,
+      registrasi_dibuka: true,
+      polling_pengumuman_detik: 30,
+      mode_hemat: false,
+      sponsor_slots_enabled: false,
+      harga_tampil: "Rp55.000",
+      teks_petunjuk_bayar: "Bayar lewat form di bawah, atau tunai ke panitia di ruang BK.",
+      batas_akhir_pembayaran: "10 Desember 2026"
+    };
+
+    let stateFormFields = [
+      { kunci: "text_input", label: "Text Input", tipe: "TEKS", wajib: true, urutan: 1 },
+      { kunci: "number_input", label: "Number Input", tipe: "ANGKA", wajib: true, urutan: 2 },
+      { kunci: "asal_kabupaten", label: "Dropdown", tipe: "PILIHAN", opsi: ["Pamekasan", "Sumenep", "Sampang", "Bangkalan"], wajib: true, urutan: 3 },
+      { kunci: "minat_rumpun", label: "Pilihan Ganda (Rumpun)", tipe: "PILIHAN_GANDA", opsi: ["Saintek / Teknik", "Kesehatan", "Soshum"], wajib: true, urutan: 4 },
+      { kunci: "tanggal_lahir", label: "Tanggal Lahir", tipe: "TANGGAL", wajib: true, urutan: 5 },
+      { kunci: "ikut_konsultasi", label: "Ikut Sesi Konsultasi Alumni?", tipe: "YA_TIDAK", wajib: false, urutan: 6 }
+    ];
+
+    let stateCaraBayar = {
+      profil_lengkap: true,
+      kode_registrasi: "CGTK-K7M2QX",
+      harga_tampil: "Rp. 1**********",
+      petunjuk: "WAJIB dicantumkan saat mengisi form pembayaran.",
+      batas_akhir: "45 Agustus 2030",
+      form_tersedia: true,
+      field_belum_diisi: ["Tanggal lahir belum diisi", "Ukuran kaos belum diisi"]
+    };
+
+    let stateSesiAcara = [
+      { id: 5, nama: "Talkshow Alumni", lokasi: "Aula Utama", jam_mulai: "10:00", jam_selesai: "11:30", status: "ACTIVE", xp: 20 },
+      { id: 6, nama: "Bedah Jurusan Teknik", lokasi: "Ruang Teater", jam_mulai: "13:00", jam_selesai: "14:30", status: "CLOSED", xp: 20 }
+    ];
+
+    let stateEvents = [
+      { id: 1, nama: "Pembukaan", tipe: "PEMBUKAAN", tanggal: "2027-01-15", urutan: 1 },
+      { id: 2, nama: "Expo Kampus", tipe: "EXPO_KAMPUS", tanggal: "2027-01-15", urutan: 2 },
+      { id: 3, nama: "Expo Jurusan", tipe: "EXPO_JURUSAN", tanggal: "2027-01-16", urutan: 3 },
+      { id: 4, nama: "Penutupan", tipe: "PENUTUPAN", tanggal: "2027-01-16", urutan: 4 }
+    ];
+
+    let stateSponsors = {
+      PLATINUM: [
+        { id: 1, nama: "Bank Jatim Syariah", urutan: 1 },
+        { id: 2, nama: "Telkomsel Ekosistem", urutan: 2 }
+      ],
+      GOLD: [
+        { id: 3, nama: "Ruangguru", urutan: 1 },
+        { id: 4, nama: "Pahamify", urutan: 2 },
+        { id: 5, nama: "Kahf Official", urutan: 3 }
+      ],
+      SILVER: [
+        { id: 6, nama: "Gramedia", urutan: 1 },
+        { id: 7, nama: "Erlangga", urutan: 2 },
+        { id: 8, nama: "Hydro Coco", urutan: 3 },
+        { id: 9, nama: "Emina", urutan: 4 }
+      ]
+    };
+
+    let statePesertaBelumLunas = [
+      { kode: "CGTK-K7M2QX", nama: "Budi Santoso", sekolah: "SMAN 1 Pamekasan", profil_lengkap: true },
+      { kode: "CGTK-P3R8WZ", nama: "Siti Aminah", sekolah: "SMAN 2 Pamekasan", profil_lengkap: true },
+      { kode: "CGTK-L9X4BV", nama: "Rizky Pratama", sekolah: "MAN 1 Pamekasan", profil_lengkap: true }
+    ];
+
+    let stateIzinAdmin = [
+      "ATUR_HARGA_TIKET", "VERIFIKASI_BAYAR", "KELOLA_FORM", "SCAN_PRESENSI", "EKSPOR_PRESENSI", "KIRIM_PENGUMUMAN", "SAKLAR_SESI", "EKSPOR_LPJ"
+    ];
+
+    // =========================================================================
+    // KOMPONEN 8/9: MESIN OFFLINE SYNC (INDEXEDDB + 3 LAPIS + POTONG 20 + BACKOFF)
+    // =========================================================================
+    const DB_NAME = "cgtk_offline_db";
+    const DB_VERSION = 1;
+    let dbInstance = null;
+
+    function bukaIndexedDB() {
+      return new Promise((resolve, reject) => {
+        if (dbInstance) return resolve(dbInstance);
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("meta")) db.createObjectStore("meta", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("peserta")) db.createObjectStore("peserta", { keyPath: "token_hash" });
+          if (!db.objectStoreNames.contains("sesi")) db.createObjectStore("sesi", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("booth")) db.createObjectStore("booth", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("antrean")) db.createObjectStore("antrean", { keyPath: "scan_uuid" });
+        };
+        req.onsuccess = (e) => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function dbPut(storeName, val) {
+      const db = await bukaIndexedDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, "readwrite");
+        tx.objectStore(storeName).put(val);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function dbGet(storeName, key) {
+      const db = await bukaIndexedDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, "readonly");
+        const req = tx.objectStore(storeName).get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function dbGetAll(storeName) {
+      const db = await bukaIndexedDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, "readonly");
+        const req = tx.objectStore(storeName).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function dbHapus(storeName, key) {
+      const db = await bukaIndexedDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, "readwrite");
+        tx.objectStore(storeName).delete(key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function sha256(teks) {
+      const msgBuffer = new TextEncoder().encode(teks);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function buatScanUUID() {
+      if (crypto && crypto.randomUUID) return crypto.randomUUID();
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    }
+
+    function ambilTokenDariQR(isiQR) {
+      const bagian = String(isiQR).split(".");
+      return bagian.length === 3 ? bagian[1] : "";
+    }
+
+    function verifikasiTandaTangan(isiQR, kunciVerifikasi) {
+      const bagian = String(isiQR).split(".");
+      if (bagian.length !== 3 || bagian[0] !== "CGTK1") return false;
+      if (bagian[1].length < 16 || bagian[2].length < 6) return false;
+      return Boolean(kunciVerifikasi);
+    }
+
+    async function siapkanDatabaseOfflineAwal() {
+      const tokenContoh = "f47ac10b58cc4372a5670e02b2c3d479";
+      const hashContoh = await sha256(tokenContoh);
+      await dbPut("meta", { id: "konfig", kunci: "kunci_verifikasi_cgtk_2027", diunduh: new Date().toISOString() });
+      await dbPut("peserta", { token_hash: hashContoh, nama: "Budi Rokapalak", sekolah: "SMAN 1 Pamekasan", kelompok: "Pluto", lunas: true });
+      for (const s of stateSesiAcara) await dbPut("sesi", s);
+    }
+
+    async function scanOffline(isiQR, sessionId) {
+      const meta = await dbGet("meta", "konfig");
+      const kunciVerifikasi = meta ? meta.kunci : "kunci_verifikasi_cgtk_2027";
+
+      if (!verifikasiTandaTangan(isiQR, kunciVerifikasi)) {
+        return { ok: false, kode: "QR_TIDAK_VALID", pesan: "QR tidak dikenali" };
+      }
+
+      const hash = await sha256(ambilTokenDariQR(isiQR));
+      const peserta = await dbGet("peserta", hash);
+      if (!peserta) return { ok: false, kode: "QR_TIDAK_DIKENAL", pesan: "QR tidak terdaftar" };
+      if (!peserta.lunas) return { ok: false, kode: "BELUM_BAYAR", pesan: `${peserta.nama} belum menyelesaikan pembayaran` };
+
+      const semuaAntrean = await dbGetAll("antrean");
+      const idUnikLokal = `${hash}-${sessionId}`;
+      const sudah = semuaAntrean.find(a => a.id_lokal === idUnikLokal);
+      if (sudah) {
+        return { ok: false, kode: "SUDAH_SCAN", pesan: `${peserta.nama} sudah presensi di sesi ini` };
+      }
+
+      const scan_uuid = buatScanUUID();
+      await dbPut("antrean", {
+        scan_uuid,
+        id_lokal: idUnikLokal,
+        isi_qr: isiQR,
+        session_id: sessionId,
+        waktu_scan: new Date().toISOString()
+      });
+
+      return { ok: true, kode: "BERHASIL", nama: peserta.nama, sekolah: peserta.sekolah, scan_uuid };
+    }
+
+    function potong(arr, ukuran) {
+      const hasil = [];
+      for (let i = 0; i < arr.length; i += ukuran) hasil.push(arr.slice(i, i + ukuran));
+      return hasil;
+    }
+
+    const JEDA_BACKOFF_MS = [5000, 15000, 45000, 120000];
+    let indeksBackoff = 0;
+    let sedangSinkron = false;
+
+    function tunggu(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function jedaBerikutnya() {
+      const jeda = JEDA_BACKOFF_MS[Math.min(indeksBackoff, JEDA_BACKOFF_MS.length - 1)];
+      indeksBackoff++;
+      return jeda;
+    }
+
+    async function kirimAntreanOffline() {
+      if (sedangSinkron || !navigator.onLine) return;
+      const antrean = await dbGetAll("antrean");
+      if (antrean.length === 0) return;
+
+      sedangSinkron = true;
+      for (const gerombolan of potong(antrean, 20)) {
+        try {
+          await tunggu(300);
+          await api.post("/attendance/sync/attendance", { batch: gerombolan });
+          const rincianServer = gerombolan.map(item => ({ scan_uuid: item.scan_uuid, status: "DITERIMA" }));
+          for (const r of rincianServer) {
+            if (r.status === "DITERIMA" || r.status === "DITOLAK") {
+              await dbHapus("antrean", r.scan_uuid);
+            }
+          }
+          indeksBackoff = 0;
+        } catch {
+          const tungguMs = jedaBerikutnya();
+          sedangSinkron = false;
+          setTimeout(kirimAntreanOffline, tungguMs);
+          return;
+        }
+      }
+      sedangSinkron = false;
+    }
+
+    window.addEventListener("online", () => { kirimAntreanOffline(); });
+
+    // =========================================================================
+    // WAKE LOCK API (DI SCANNER & DASHBOARD + RE-ACQUIRE VISIBILITYCHANGE)
+    // =========================================================================
+    let wakeLockSentinel = null;
+    let ruteAktif = "/";
+
+    async function aktifkanWakeLock() {
+      if (!("wakeLock" in navigator)) return;
+      try {
+        wakeLockSentinel = await navigator.wakeLock.request("screen");
+      } catch {}
+    }
+
+    async function lepaskanWakeLock() {
+      if (wakeLockSentinel) {
+        try { await wakeLockSentinel.release(); } catch {}
+        wakeLockSentinel = null;
+      }
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && (ruteAktif === "/scanner" || ruteAktif === "/dashboard")) {
+        aktifkanWakeLock();
+      }
+    });
+
+    // =========================================================================
+    // KOMPONEN 10: OVERLAY PENGUMUMAN DARURAT (`document.hidden` DI INTERVAL)
+    // =========================================================================
+    let sejakServerTime = null;
+    let timerPollingPengumuman = null;
+
+    function mulaiPollingPengumuman() {
+      if (timerPollingPengumuman) clearInterval(timerPollingPengumuman);
+      const intervalMs = (statePengaturanPublik.polling_pengumuman_detik || 30) * 1000;
+
+      const jalan = async () => {
+        if (document.hidden) return;
+        try {
+          if (ENV_RAFLY.VITE_API_BASE) {
+            const res = await api.get(`/announcements/terbaru?sejak=${encodeURIComponent(sejakServerTime || "")}`);
+            if (res && res.meta?.server_time) sejakServerTime = res.meta.server_time;
+          } else {
+            sejakServerTime = new Date().toISOString();
+          }
+        } catch {}
+      };
+
+      timerPollingPengumuman = setInterval(jalan, intervalMs);
+    }
+
+    function tampilkanPopupMerah(pengumuman) {
+      document.getElementById("darurat-judul").innerText = pengumuman.judul;
+      document.getElementById("darurat-isi").innerText = pengumuman.isi;
+      document.getElementById("overlay-darurat").classList.remove("hidden");
+    }
+
+    function tutupPopupDarurat() {
+      document.getElementById("overlay-darurat").classList.add("hidden");
+    }
+
+    // =========================================================================
+    // MENU GARIS TIGA (HAMBURGER) MOBILE & ROUTER NAVIGASI
+    // =========================================================================
+    let menuMobileTerbuka = false;
+
+    function toggleMenuMobile() {
+      menuMobileTerbuka = !menuMobileTerbuka;
+      const drawer = document.getElementById("mobile-menu-drawer");
+      const btn = document.getElementById("btn-mobile-menu");
+      if (menuMobileTerbuka) {
+        drawer.classList.remove("hidden");
+        btn.classList.add("hamburger-active");
+      } else {
+        drawer.classList.add("hidden");
+        btn.classList.remove("hamburger-active");
+      }
+    }
+
+    function tutupMenuMobile() {
+      menuMobileTerbuka = false;
+      document.getElementById("mobile-menu-drawer")?.classList.add("hidden");
+      document.getElementById("btn-mobile-menu")?.classList.remove("hamburger-active");
+    }
+
+    function navigasiKe(rute) {
+      ruteAktif = rute;
+      tutupMenuMobile();
+
+      const petaId = {
+        "/": "page-landing",
+        "/login": "page-login",
+        "/register": "page-register",
+        "/bayar": "page-bayar",
+        "/dashboard": "page-dashboard",
+        "/profil": "page-profil",
+        "/scanner": "page-scanner",
+        "/admin": "page-admin"
+      };
+
+      document.querySelectorAll(".page-view").forEach(el => el.classList.add("hidden"));
+      const targetEl = document.getElementById(petaId[rute] || "page-landing");
+      if (targetEl) targetEl.classList.remove("hidden");
+
+      const header = document.getElementById("global-header");
+      const footer = document.getElementById("global-footer");
+      if (rute === "/scanner") {
+        header.classList.add("hidden");
+        footer.classList.add("hidden");
+        tutupOverlayScannerPopUp();
+        aktifkanWakeLock();
+        cekStatusSesiScanner();
+        nyalakanKameraScanner();
+      } else {
+        header.classList.remove("hidden");
+        footer.classList.remove("hidden");
+        matikanKameraScanner();
+        if (rute === "/dashboard") aktifkanWakeLock();
+        else lepaskanWakeLock();
+      }
+
+      // Highlight menu desktop
+      document.querySelectorAll(".nav-link").forEach(btn => {
+        if (btn.getAttribute("data-route") === rute) {
+          btn.className = "nav-link touch-target px-3.5 py-1.5 text-xs font-extrabold rounded-xl bg-slate-900 text-white transition";
+        } else {
+          btn.className = "nav-link touch-target px-3.5 py-1.5 text-xs font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition";
+        }
+      });
+
+      // Highlight menu mobile
+      document.querySelectorAll(".nav-link-mobile").forEach(btn => {
+        if (btn.getAttribute("data-route") === rute) {
+          btn.className = "nav-link-mobile touch-target w-full px-4 py-3 rounded-2xl text-left text-xs font-extrabold flex items-center justify-between bg-slate-900 text-white transition";
+        } else {
+          btn.className = "nav-link-mobile touch-target w-full px-4 py-3 rounded-2xl text-left text-xs font-bold flex items-center justify-between text-slate-700 hover:bg-slate-100 transition";
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+
+    function keluarDariScanner() {
+      matikanKameraScanner();
+      navigasiKe("/dashboard");
+    }
+
+    // =========================================================================
+    // LANDING PAGE LOGIC
+    // =========================================================================
+    let indeksCarousel = 0;
+
+    function geserCarousel(arah) {
+      const daftar = ASET_GAMBAR_UI.CAROUSEL_LANDING;
+      indeksCarousel = (indeksCarousel + arah + daftar.length) % daftar.length;
+      const img = document.getElementById("carousel-img");
+      if (img) img.src = daftar[indeksCarousel];
+      renderDotsCarousel();
+    }
+
+    function renderDotsCarousel() {
+      const dots = document.getElementById("carousel-dots");
+      if (!dots) return;
+      dots.innerHTML = ASET_GAMBAR_UI.CAROUSEL_LANDING.map((_, idx) => `
+        <span class="h-1.5 rounded-full transition-all ${idx === indeksCarousel ? 'w-6 bg-white' : 'w-1.5 bg-white/50'}"></span>
+      `).join("");
+    }
+
+    function renderLandingPage() {
+      renderDotsCarousel();
+
+      const boxHarga = document.getElementById("landing-box-harga");
+      const teksHarga = document.getElementById("landing-teks-harga");
+      if (statePengaturanPublik.harga_tampil && statePengaturanPublik.harga_tampil.trim() !== "") {
+        boxHarga.classList.remove("hidden");
+        teksHarga.innerText = statePengaturanPublik.harga_tampil;
+      } else {
+        boxHarga.classList.add("hidden");
+      }
+
+      const btnCta = document.getElementById("btn-landing-cta");
+      const btnReg = document.getElementById("btn-landing-register");
+      if (!statePengaturanPublik.registrasi_dibuka) {
+        btnCta.innerText = "Pendaftaran Ditutup";
+        btnCta.disabled = true;
+        btnCta.className = "touch-target px-8 py-3 rounded-full bg-slate-300 text-slate-500 font-bold text-xs cursor-not-allowed";
+        if (btnReg) btnReg.classList.add("hidden");
+      }
+
+      const gridEvents = document.getElementById("landing-grid-events");
+      const urutEvents = [...stateEvents].sort((a, b) => a.urutan - b.urutan);
+      gridEvents.innerHTML = urutEvents.map(ev => `
+        <div class="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 flex items-center justify-between transition">
+          <div>
+            <span class="text-[10px] font-extrabold text-cgtk-magenta uppercase">${ev.tipe.replace("_", " ")}</span>
+            <h3 class="font-display text-sm font-black text-slate-900">${ev.nama}</h3>
+          </div>
+          <span class="text-xs font-bold text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200">${ev.tanggal}</span>
+        </div>
+      `).join("");
+
+      const renderTier = (idContainer, items, kelasUkuran) => {
+        const el = document.getElementById(idContainer);
+        if (!el) return;
+        const urut = [...(items || [])].sort((a, b) => a.urutan - b.urutan);
+        el.innerHTML = urut.map(sp => `
+          <div class="rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center p-3 text-center font-display font-extrabold text-slate-700 hover:border-slate-300 transition ${kelasUkuran}">
+            ${sp.nama}
+          </div>
+        `).join("");
+      };
+
+      renderTier("grid-sponsor-platinum", stateSponsors.PLATINUM, "h-20 text-sm");
+      renderTier("grid-sponsor-gold", stateSponsors.GOLD, "h-14 text-xs");
+      renderTier("grid-sponsor-silver", stateSponsors.SILVER, "h-11 text-[11px]");
+
+      const footerSp = document.getElementById("footer-sponsors");
+      if (footerSp) {
+        footerSp.innerHTML = stateSponsors.PLATINUM.map(s => `<span class="px-2.5 py-1 bg-slate-100 rounded-md text-[11px] font-bold text-slate-600">${s.nama}</span>`).join("");
+      }
+    }
+
+    // =========================================================================
+    // LOGIN & REGISTRASI FORM BUILDER 6 TIPE
+    // =========================================================================
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      simulasiSinkronAuth("/dashboard");
+    }
+
+    function loginDenganGoogle() {
+      simulasiSinkronAuth("/dashboard");
+    }
+
+    function simulasiSinkronAuth(arahkanKeDariServer) {
+      const res = {
+        sukses: true,
+        data: {
+          pengguna: { nama: "Budi Rokapalak", peran: "PESERTA" },
+          arahkan_ke: arahkanKeDariServer
+        }
+      };
+      navigasiKe(res.data.arahkan_ke);
+    }
+
+    function renderFormBuilder() {
+      const wadah = document.getElementById("wadah-form-builder");
+      if (!wadah) return;
+
+      const urutFields = [...stateFormFields].sort((a, b) => a.urutan - b.urutan);
+
+      wadah.innerHTML = urutFields.map(f => {
+        const tandaWajib = f.wajib ? `<span class="text-rose-500">*</span>` : "";
+        const attrWajib = f.wajib ? "required" : "";
+
+        switch (f.tipe) {
+          case "TEKS":
+            return `
+              <div>
+                <label class="text-xs font-bold text-slate-800 block mb-1">${f.label} ${tandaWajib}</label>
+                <input type="text" data-kunci="${f.kunci}" data-tipe="TEKS" ${attrWajib} placeholder="Insert Text Here" class="extra-field w-full touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-cgtk-magenta outline-none">
+              </div>`;
+
+          case "ANGKA":
+            return `
+              <div>
+                <label class="text-xs font-bold text-slate-800 block mb-1">${f.label} ${tandaWajib}</label>
+                <input type="number" data-kunci="${f.kunci}" data-tipe="ANGKA" ${attrWajib} placeholder="Insert Number Here" class="extra-field w-full touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-cgtk-magenta outline-none">
+              </div>`;
+
+          case "PILIHAN":
+            return `
+              <div>
+                <label class="text-xs font-bold text-slate-800 block mb-1">${f.label} ${tandaWajib}</label>
+                <select data-kunci="${f.kunci}" data-tipe="PILIHAN" ${attrWajib} class="extra-field w-full sm:w-2/3 touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-cgtk-magenta outline-none">
+                  <option value="">Dropdown</option>
+                  ${(f.opsi || []).map(op => `<option value="${op}">${op}</option>`).join("")}
+                </select>
+              </div>`;
+
+          case "PILIHAN_GANDA":
+            return `
+              <div data-kunci="${f.kunci}" data-tipe="PILIHAN_GANDA" data-wajib="${f.wajib}" class="extra-field space-y-1.5">
+                <label class="text-xs font-bold text-slate-800 block">${f.label} ${tandaWajib}</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  ${(f.opsi || []).map(op => `
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs cursor-pointer hover:bg-slate-200/70">
+                      <input type="checkbox" value="${op}" class="pg-checkbox w-4 h-4 accent-cgtk-magenta rounded">
+                      <span class="font-medium text-slate-800">${op}</span>
+                    </label>
+                  `).join("")}
+                </div>
+              </div>`;
+
+          case "TANGGAL":
+            return `
+              <div>
+                <label class="text-xs font-bold text-slate-800 block mb-1">${f.label} ${tandaWajib}</label>
+                <input type="date" data-kunci="${f.kunci}" data-tipe="TANGGAL" ${attrWajib} class="extra-field w-full touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:border-cgtk-magenta outline-none">
+              </div>`;
+
+          case "YA_TIDAK":
+            return `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-slate-100 border border-slate-200">
+                <span class="text-xs font-bold text-slate-800">${f.label}</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" data-kunci="${f.kunci}" data-tipe="YA_TIDAK" class="extra-field sr-only peer">
+                  <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-cgtk-magenta peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>`;
+
+          default:
+            return `
+              <div>
+                <label class="text-xs font-bold text-slate-800 block mb-1">${f.label} ${tandaWajib}</label>
+                <input type="text" data-kunci="${f.kunci}" data-tipe="TEKS" ${attrWajib} class="extra-field w-full touch-target px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs outline-none">
+              </div>`;
+        }
+      }).join("");
+    }
+
+    async function kirimRegistrasi(e) {
+      e.preventDefault();
+      const errBox = document.getElementById("register-error-box");
+      errBox.classList.add("hidden");
+
+      const extraFields = {};
+      const elemenExtra = document.querySelectorAll(".extra-field");
+
+      for (const el of elemenExtra) {
+        const kunci = el.getAttribute("data-kunci");
+        const tipe = el.getAttribute("data-tipe");
+
+        if (tipe === "PILIHAN_GANDA") {
+          const wajib = el.getAttribute("data-wajib") === "true";
+          const terpilih = Array.from(el.querySelectorAll(".pg-checkbox:checked")).map(cb => cb.value);
+          if (wajib && terpilih.length === 0) {
+            errBox.innerText = "Mohon pilih minimal satu opsi pada pertanyaan pilihan ganda yang wajib.";
+            errBox.classList.remove("hidden");
+            return;
+          }
+          extraFields[kunci] = terpilih;
+        } else if (tipe === "YA_TIDAK") {
+          extraFields[kunci] = el.checked;
+        } else if (tipe === "ANGKA") {
+          extraFields[kunci] = Number(el.value);
+        } else {
+          extraFields[kunci] = el.value;
+        }
+      }
+
+      const payload = {
+        asal_sekolah: document.getElementById("reg-asal-sekolah").value,
+        kelas: document.getElementById("reg-kelas").value,
+        target_jurusan: document.getElementById("reg-target-jurusan").value,
+        kampus_impian: document.getElementById("reg-kampus-impian").value,
+        izin_bagi_data: document.getElementById("reg-izin-bagi-data").checked,
+        extra_fields: extraFields
+      };
+
+      await api.post("/registrations", payload);
+      stateCaraBayar.profil_lengkap = true;
+      renderHalamanBayar();
+      navigasiKe("/bayar");
+    }
+
+    // =========================================================================
+    // HALAMAN 4: PEMBAYARAN & CEK STATUS PUBLIK
+    // =========================================================================
+    function ubahSimulasiProfilLengkap(statusLengkap) {
+      stateCaraBayar.profil_lengkap = statusLengkap;
+      renderHalamanBayar();
+    }
+
+    function renderHalamanBayar() {
+      const boxTerkunci = document.getElementById("bayar-keadaan-terkunci");
+      const boxLengkap = document.getElementById("bayar-keadaan-lengkap");
+
+      if (!stateCaraBayar.profil_lengkap) {
+        boxTerkunci.classList.remove("hidden");
+        boxLengkap.classList.add("hidden");
+        document.getElementById("list-field-belum-diisi").innerHTML = (stateCaraBayar.field_belum_diisi || []).map(f => `
+          <p class="text-sm font-black text-rose-600">*${f}</p>
+        `).join("");
+      } else {
+        boxTerkunci.classList.add("hidden");
+        boxLengkap.classList.remove("hidden");
+        document.getElementById("bayar-nominal-tampil").innerText = stateCaraBayar.harga_tampil;
+        document.getElementById("bayar-kode-registrasi").innerText = stateCaraBayar.kode_registrasi;
+        document.getElementById("bayar-teks-petunjuk").innerText = stateCaraBayar.petunjuk;
+        document.getElementById("bayar-batas-akhir").innerText = stateCaraBayar.batas_akhir;
+
+        const baseUrl = ENV_RAFLY.VITE_API_BASE || "https://cgtk.my.id/api/v1";
+        document.getElementById("link-buka-pembayaran").href = `${baseUrl}/payments/buka`;
+      }
+    }
+
+    function salinKodePendaftaran() {
+      navigator.clipboard.writeText(stateCaraBayar.kode_registrasi);
+      alert(`Kode Registrasi ${stateCaraBayar.kode_registrasi} berhasil disalin!`);
+    }
+
+    function handleKlikBukaFormBayar() {
+      setTimeout(() => {
+        document.getElementById("box-menunggu-verifikasi").classList.remove("hidden");
+      }, 400);
+    }
+
+    function bukaModalCekStatusPublik() {
+      document.getElementById("judul-modal-fitur").innerText = "Cek Status Pendaftaran (/cek-status)";
+      document.getElementById("isi-modal-fitur").innerHTML = `
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <p class="font-mono font-black text-sm text-slate-900">${stateCaraBayar.kode_registrasi}</p>
+          <p class="font-bold text-slate-700">Nama: Budi R. (Disamarkan untuk privasi publik)</p>
+          <span class="inline-block px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 font-extrabold text-[11px]">MENUNGGU_VERIFIKASI</span>
+          <p class="text-slate-600 mt-1">Bukti pembayaranmu sedang diperiksa panitia Divisi Administrasi.</p>
+        </div>
+      `;
+      document.getElementById("modal-fitur-peserta").classList.remove("hidden");
+    }
+
+    // =========================================================================
+    // HALAMAN 5: DASHBOARD PESERTA, QR CODE, & 6 SUB-FITUR LENGKAP
+    // =========================================================================
+    function renderDashboardPeserta() {
+      const wadahQR = document.getElementById("qrcode-canvas");
+      if (wadahQR) {
+        wadahQR.innerHTML = "";
+        new QRCode(wadahQR, {
+          text: "CGTK1.f47ac10b58cc4372a5670e02b2c3d479.a7f3d92b1c8e",
+          width: 210,
+          height: 210,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+
+      const boxLive = document.getElementById("dash-box-sesi-live");
+      const sesiAktif = stateSesiAcara.find(s => s.status === "ACTIVE");
+      if (sesiAktif) {
+        boxLive.innerHTML = `
+          <div>
+            <p class="text-sm font-black text-slate-900">${sesiAktif.nama}</p>
+            <p class="text-xs text-slate-500">${sesiAktif.lokasi} (${sesiAktif.jam_mulai} - ${sesiAktif.jam_selesai})</p>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider animate-pulse">
+            ● LIVE
+          </span>
+        `;
+      } else {
+        boxLive.innerHTML = `<p class="text-xs text-slate-500">Belum ada sesi yang berstatus ACTIVE saat ini.</p>`;
+      }
+    }
+
+    async function checkinBoothPeserta() {
+      const input = document.getElementById("dash-input-kode-booth");
+      const kode = input.value.trim().toUpperCase();
+      if (!kode) return alert("Masukkan kode poster booth terlebih dahulu.");
+
+      await api.post("/booths/checkin", { kode_booth: kode });
+      const box = document.getElementById("dash-hasil-materi-booth");
+      box.classList.remove("hidden");
+      box.innerHTML = `
+        <p class="text-[11px] font-bold text-emerald-700">Materi Booth (${kode}) sudah terbuka:</p>
+        <a href="#materi-1" class="block p-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 hover:border-slate-400">📄 Apa itu Teknik Informatika (Google Slides) &rarr;</a>
+        <a href="#materi-2" class="block p-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 hover:border-slate-400">📑 Prospek Kerja TI 2027.pdf &rarr;</a>
+      `;
+      input.value = "";
+    }
+
+    function bukaFiturPeserta(kodeFitur) {
+      const judul = document.getElementById("judul-modal-fitur");
+      const isi = document.getElementById("isi-modal-fitur");
+
+      if (kodeFitur === "KUIS") {
+        judul.innerText = "📝 Kuis Rekomendasi Minat (GET /quiz/percobaan-saya)";
+        isi.innerHTML = `
+          <div class="p-4 rounded-2xl bg-fuchsia-50 border border-fuchsia-200 space-y-2">
+            <span class="text-[10px] font-extrabold text-cgtk-magenta uppercase">Percobaan 2 dari ${statePengaturanPublik.max_percobaan_kuis}</span>
+            <h4 class="font-display text-base font-black text-slate-900">Hasil Rumpun: Teknik &amp; Rekayasa</h4>
+            <p class="text-slate-600">Rekomendasi Jurusan: <strong>Teknik Informatika (92%)</strong>, <strong>Teknik Elektro (85%)</strong></p>
+            <p class="text-slate-600">Rekomendasi Booth Kampus: <strong>ITB, ITS</strong></p>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-between">
+            <span>🔒 Analisis Lengkap Terkunci (Kunjungi 3 booth rekomendasi)</span>
+            <span class="font-bold text-slate-700">0/3</span>
+          </div>
+        `;
+      } else if (kodeFitur === "PASPOR") {
+        judul.innerText = "🛂 Campus Passport (GET /booths/passport/saya)";
+        isi.innerHTML = `
+          <p class="text-slate-500 font-semibold">Tab 1: Paspor Kampus (Terkumpul 1/2) &middot; Booth yang terlewat tetap ditampilkan abu-abu:</p>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200">
+              <span class="text-[10px] font-black text-emerald-700 uppercase">DIKUNJUNGI (+20 XP)</span>
+              <p class="font-display font-black text-sm text-slate-900 mt-1">Booth ITB</p>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-slate-100 border border-slate-200 opacity-60">
+              <span class="text-[10px] font-black text-slate-500 uppercase">BELUM DIKUNJUNGI (CLOSED)</span>
+              <p class="font-display font-black text-sm text-slate-700 mt-1">Booth ITS</p>
+            </div>
+          </div>
+        `;
+      } else if (kodeFitur === "MISI") {
+        judul.innerText = "🎯 Misi Saya (GET /missions/saya)";
+        isi.innerHTML = `
+          <div class="space-y-2">
+            <p class="font-extrabold text-slate-700">Misi dari Kuis (Acara 2 — Expo Kampus):</p>
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between items-center">
+              <span class="font-bold text-emerald-950">✅ Kunjungi Booth ITB</span>
+              <span class="font-black text-emerald-700">+15 XP</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex justify-between items-center">
+              <span class="font-bold text-slate-800">⏳ Kunjungi Booth ITS</span>
+              <span class="font-black text-slate-600">+15 XP</span>
+            </div>
+            <p class="font-extrabold text-slate-700 pt-2">Misi Umum:</p>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex justify-between items-center">
+              <span class="font-bold text-slate-800">Kunjungi 5 booth berbeda (3/5)</span>
+              <span class="font-black text-cgtk-magenta">+50 XP</span>
+            </div>
+          </div>
+        `;
+      } else if (kodeFitur === "PERINGKAT") {
+        judul.innerText = "🏆 Papan Peringkat (GET /leaderboard)";
+        isi.innerHTML = `
+          <div class="space-y-2">
+            <div class="p-3 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+              <div>
+                <p class="font-black text-slate-900">#1 Budi Rokapalak &middot; SMAN 1 Pamekasan</p>
+                <p class="text-[11px] text-amber-800 font-semibold">Lv.3 Penyusur Kampus &middot; 340 XP</p>
+              </div>
+              <button onclick="bunyiBipScanner('PENDEK')" class="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-[10px] font-bold">▶️ Lagu</button>
+            </div>
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+              <p class="font-extrabold text-slate-700 mb-1">Aturan Pemutus Seri (Terbuka untuk Peserta):</p>
+              <ol class="list-decimal list-inside text-[11px] text-slate-600 space-y-0.5">
+                <li>XP tertinggi</li>
+                <li>Yang lebih dulu mencapai XP tersebut</li>
+                <li>Yang lebih banyak booth dikunjungi</li>
+                <li>Yang lebih dulu mendaftar</li>
+              </ol>
+            </div>
+          </div>
+        `;
+      } else if (kodeFitur === "RAPOR") {
+        judul.innerText = "📊 Career Report PDF (GET /reports/career/saya)";
+        isi.innerHTML = `
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <p class="font-bold text-slate-900">Budi Rokapalak &middot; SMAN 1 Pamekasan</p>
+            <p class="text-slate-600">Rumpun Kuis: <strong>Teknik &amp; Rekayasa</strong></p>
+            <p class="text-slate-600">Booth Dikunjungi: <strong>Booth ITB, Booth Teknik Informatika</strong></p>
+            <p class="text-slate-600">Materi Terbuka: <strong>Brosur ITB 2027, Kurikulum TI</strong></p>
+            <button onclick="window.print()" class="mt-2 w-full touch-target py-2.5 bg-emerald-600 text-white font-extrabold rounded-xl text-xs">
+              📥 Cetak / Simpan Career Report PDF
+            </button>
+          </div>
+        `;
+      } else if (kodeFitur === "JADWAL") {
+        judul.innerText = "📅 Jadwal Sesi Acara (GET /events/sessions)";
+        isi.innerHTML = stateSesiAcara.map(s => `
+          <div class="p-3.5 rounded-2xl border ${s.status === 'ACTIVE' ? 'bg-emerald-50 border-emerald-300' : 'bg-slate-50 border-slate-200'} flex items-center justify-between">
+            <div>
+              <p class="font-bold text-slate-900">${s.nama}</p>
+              <p class="text-[11px] text-slate-500">${s.lokasi} &middot; ${s.jam_mulai} - ${s.jam_selesai} (+${s.xp} XP)</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${s.status === 'ACTIVE' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}">
+              ${s.status === 'ACTIVE' ? '● LIVE' : s.status}
+            </span>
+          </div>
+        `).join("");
+      }
+
+      document.getElementById("modal-fitur-peserta").classList.remove("hidden");
+    }
+
+    function tutupModalFiturPeserta() {
+      document.getElementById("modal-fitur-peserta").classList.add("hidden");
+    }
+
+    // =========================================================================
+    // HALAMAN 6: SCANNER MURNI KAMERA + POP-UP (`Scanner-Pop-Up` 111856.png)
+    // =========================================================================
+    let modeCepatScanner = false;
+    let streamKamera = null;
+    let animasiFrameId = null;
+    let waktuScanTerakhir = 0;
+    let jumlahScanHariIni = Number(localStorage.getItem("cgtk_scan_hari_ini") || "0");
+
+    function inisialisasiScanner() {
+      document.getElementById("label-xp-hadir").innerText = `+${statePengaturanPublik.xp_booth_hadir} XP`;
+      document.getElementById("label-xp-aktif").innerText = `+${statePengaturanPublik.xp_booth_aktif} XP`;
+      document.getElementById("label-xp-sangat-aktif").innerText = `+${statePengaturanPublik.xp_booth_sangat_aktif} XP`;
+    }
+
+    function cekStatusSesiScanner() {
+      const sesiAktif = stateSesiAcara.find(s => s.status === "ACTIVE");
+      const lockedOverlay = document.getElementById("scanner-locked-overlay");
+      if (!sesiAktif) {
+        lockedOverlay.classList.remove("hidden");
+        matikanKameraScanner();
+      } else {
+        lockedOverlay.classList.add("hidden");
+      }
+    }
+
+    function bukaOverlayScannerPopUp() {
+      document.getElementById("scanner-popup-overlay").classList.remove("hidden");
+    }
+
+    function tutupOverlayScannerPopUp() {
+      document.getElementById("scanner-popup-overlay").classList.add("hidden");
+    }
+
+    function toggleModeCepatScanner() {
+      const cb = document.getElementById("checkbox-mode-cepat");
+      modeCepatScanner = Boolean(cb && cb.checked);
+    }
+
+    async function nyalakanKameraScanner() {
+      const video = document.getElementById("scanner-video");
+      try {
+        streamKamera = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        video.srcObject = streamKamera;
+        await video.play();
+        animasiFrameId = requestAnimationFrame(loopBacaFrameQR);
+      } catch {
+        // Apabila perangkat tidak memiliki kamera belakang, layar tetap murni hitam (#1c1c1c)
+        // dan ketika diketuk langsung membuka Pop-Up Scanner sesuai desain.
+      }
+    }
+
+    function matikanKameraScanner() {
+      if (animasiFrameId) {
+        cancelAnimationFrame(animasiFrameId);
+        animasiFrameId = null;
+      }
+      if (streamKamera) {
+        streamKamera.getTracks().forEach(t => t.stop());
+        streamKamera = null;
+      }
+      const video = document.getElementById("scanner-video");
+      if (video) video.srcObject = null;
+    }
+
+    function loopBacaFrameQR() {
+      const video = document.getElementById("scanner-video");
+      const canvas = document.getElementById("scanner-canvas");
+      if (!streamKamera || !video || !canvas) return;
+
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        if (window.jsQR) {
+          const qrTerbaca = window.jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert"
+          });
+          if (qrTerbaca && qrTerbaca.data) {
+            prosesHasilScan(qrTerbaca.data);
+          }
+        }
+      }
+      animasiFrameId = requestAnimationFrame(loopBacaFrameQR);
+    }
+
+    function bunyiBipScanner(tipe) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const playTone = (freq, durasi, delay = 0) => {
+          setTimeout(() => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.value = freq;
+            osc.type = "sine";
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + durasi);
+          }, delay);
+        };
+
+        if (tipe === "PENDEK") playTone(880, 0.1);
+        else if (tipe === "GANDA") { playTone(520, 0.09, 0); playTone(520, 0.09, 130); }
+        else if (tipe === "PANJANG") playTone(210, 0.45);
+      } catch {}
+    }
+
+    async function pilihOpsiXPScanner(jenisKeaktifan) {
+      const petaXP = {
+        "HADIR": statePengaturanPublik.xp_booth_hadir,
+        "AKTIF": statePengaturanPublik.xp_booth_aktif,
+        "SANGAT_AKTIF": statePengaturanPublik.xp_booth_sangat_aktif
+      };
+      const xpDidapat = petaXP[jenisKeaktifan] || statePengaturanPublik.xp_booth_hadir;
+      const scan_uuid = buatScanUUID();
+
+      tutupOverlayScannerPopUp();
+      await api.post("/booths/scan", {
+        isi_qr: "CGTK1.f47ac10b58cc4372a5670e02b2c3d479.a7f3d92b1c8e",
+        booth_id: 7,
+        jenis: jenisKeaktifan,
+        scan_uuid,
+        waktu_scan: new Date().toISOString()
+      });
+
+      jumlahScanHariIni++;
+      localStorage.setItem("cgtk_scan_hari_ini", String(jumlahScanHariIni));
+      tampilkanLayarPenuhHasilScan("HIJAU", "BERHASIL", `Budi Rokapalak · Kelompok : Pluto (+${xpDidapat} XP)`, "PENDEK");
+    }
+
+    async function prosesHasilScan(isiQR) {
+      const sekarang = Date.now();
+      if (sekarang - waktuScanTerakhir < 800) return;
+      waktuScanTerakhir = sekarang;
+
+      const sesiAktif = stateSesiAcara.find(s => s.status === "ACTIVE");
+      const sessionId = sesiAktif ? sesiAktif.id : 5;
+
+      if (!navigator.onLine) {
+        const hasilOffline = await scanOffline(isiQR, sessionId);
+        if (hasilOffline.ok) {
+          tampilkanLayarPenuhHasilScan("HIJAU", "BERHASIL (OFFLINE)", `${hasilOffline.nama} · ${hasilOffline.sekolah}`, "PENDEK");
+        } else if (hasilOffline.kode === "SUDAH_SCAN") {
+          tampilkanLayarPenuhHasilScan("KUNING", "SUDAH_SCAN", hasilOffline.pesan, "GANDA");
+        } else if (hasilOffline.kode === "BELUM_BAYAR") {
+          tampilkanLayarPenuhHasilScan("ORANYE", "BELUM_BAYAR", hasilOffline.pesan, "PANJANG");
+        } else {
+          tampilkanLayarPenuhHasilScan("MERAH", hasilOffline.kode, hasilOffline.pesan, "PANJANG");
+        }
+        return;
+      }
+
+      if (isiQR === "SUDAH_SCAN") {
+        tampilkanLayarPenuhHasilScan("KUNING", "SUDAH_SCAN", "Budi sudah presensi di sesi ini", "GANDA");
+      } else if (isiQR === "BELUM_BAYAR") {
+        tampilkanLayarPenuhHasilScan("ORANYE", "BELUM_BAYAR", "Budi belum menyelesaikan pembayaran", "PANJANG");
+      } else if (isiQR === "SESI_DITUTUP") {
+        tampilkanLayarPenuhHasilScan("MERAH", "SESI_DITUTUP", "Sesi sudah ditutup", "PANJANG");
+      } else if (isiQR === "TERLALU_SERING") {
+        tampilkanLayarPenuhHasilScan("ORANYE", "TERLALU_SERING", "Tunggu sebentar", "NONE");
+      } else if (!String(isiQR).startsWith("CGTK")) {
+        tampilkanLayarPenuhHasilScan("MERAH", "QR_TIDAK_VALID", "QR tidak dikenali", "PANJANG");
+      } else {
+        if (modeCepatScanner) {
+          tampilkanLayarPenuhHasilScan("HIJAU", "BERHASIL", "Budi Rokapalak · Kelompok : Pluto", "PENDEK");
+        } else {
+          bukaOverlayScannerPopUp();
+        }
+      }
+    }
+
+    let timerResetOverlayScan = null;
+
+    function tampilkanLayarPenuhHasilScan(warna, judulKode, pesanServer, jenisBip) {
+      if (jenisBip !== "NONE") bunyiBipScanner(jenisBip);
+
+      const overlay = document.getElementById("scanner-result-overlay");
+      const elKode = document.getElementById("scan-res-kode");
+      const elPesan = document.getElementById("scan-res-pesan");
+      const btnTutup = document.getElementById("btn-tutup-popup-scan");
+
+      const petaWarnaLatar = {
+        "HIJAU": "bg-emerald-600 text-white",
+        "KUNING": "bg-amber-400 text-slate-950",
+        "ORANYE": "bg-orange-500 text-white",
+        "MERAH": "bg-rose-600 text-white"
+      };
+
+      overlay.className = `fixed inset-0 z-40 flex flex-col items-center justify-center p-6 text-center transition-all ${petaWarnaLatar[warna] || "bg-rose-600 text-white"}`;
+      elKode.innerText = judulKode;
+      elPesan.innerText = pesanServer;
+      overlay.classList.remove("hidden");
+
+      if (timerResetOverlayScan) clearTimeout(timerResetOverlayScan);
+
+      if (modeCepatScanner) {
+        btnTutup.classList.add("hidden");
+        timerResetOverlayScan = setTimeout(() => {
+          overlay.classList.add("hidden");
+        }, 850);
+      } else {
+        btnTutup.classList.remove("hidden");
+      }
+    }
+
+    function tutupHasilScanNormal() {
+      document.getElementById("scanner-result-overlay").classList.add("hidden");
+    }
+
+    function bukaModalKetikKode() {
+      document.getElementById("modal-ketik-kode").classList.remove("hidden");
+      setTimeout(() => document.getElementById("input-kode-qr-manual")?.focus(), 100);
+    }
+
+    function tutupModalKetikKode() {
+      document.getElementById("modal-ketik-kode").classList.add("hidden");
+    }
+
+    function submitKodeQRManual(e) {
+      e.preventDefault();
+      const input = document.getElementById("input-kode-qr-manual");
+      const nilai = input.value.trim();
+      if (!nilai) return;
+      tutupModalKetikKode();
+      input.value = "";
+      prosesHasilScan(nilai);
+    }
+
+    function ujiCabangDariModal(kodeSimulasi) {
+      tutupModalKetikKode();
+      prosesHasilScan(kodeSimulasi);
+    }
+
+    let pesertaManualTerpilih = null;
+    function bukaModalManual() { document.getElementById("modal-presensi-manual").classList.remove("hidden"); }
+    function tutupModalManual() {
+      document.getElementById("modal-presensi-manual").classList.add("hidden");
+      document.getElementById("hasil-cari-manual").innerHTML = "";
+      document.getElementById("box-alasan-manual").classList.add("hidden");
+    }
+
+    function cariPesertaLapangan() {
+      const q = document.getElementById("input-cari-manual").value.trim().toLowerCase();
+      if (q.length < 2) return alert("Ketik minimal 2 huruf nama peserta.");
+      const daftar = [
+        { id: "part-01", nama: "Budi Rokapalak", kelompok: "Pluto", sekolah: "SMAN 1 Pamekasan", status: "LUNAS" },
+        { id: "part-02", nama: "Siti Aminah", kelompok: "Mars", sekolah: "SMAN 2 Pamekasan", status: "LUNAS" }
+      ];
+      document.getElementById("hasil-cari-manual").innerHTML = daftar.map(p => `
+        <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+          <div>
+            <p class="font-bold text-slate-900">${p.nama}</p>
+            <p class="text-slate-500">Kelompok : ${p.kelompok} &middot; ${p.sekolah}</p>
+          </div>
+          <button onclick="pilihPesertaManual('${p.id}', '${p.nama}')" class="px-3.5 py-1.5 bg-slate-900 text-white font-bold rounded-xl">Pilih</button>
+        </div>
+      `).join("");
+    }
+
+    function pilihPesertaManual(id, nama) {
+      pesertaManualTerpilih = { id, nama };
+      document.getElementById("label-peserta-terpilih").innerText = `Terpilih: ${nama}`;
+      document.getElementById("box-alasan-manual").classList.remove("hidden");
+    }
+
+    async function kirimPresensiManual() {
+      const alasan = document.getElementById("input-alasan-manual").value.trim();
+      if (!alasan) return alert("Alasan wajib diisi untuk pencatatan audit_logs!");
+      await api.post("/attendance/manual", { participant_id: pesertaManualTerpilih.id, session_id: 5, alasan });
+      tutupModalManual();
+      document.getElementById("popup-scan-nama").innerText = pesertaManualTerpilih.nama;
+      bukaOverlayScannerPopUp();
+    }
+
+    // =========================================================================
+    // HALAMAN 7: ADMIN DASHBOARD LENGKAP
+    // =========================================================================
+    function renderAdminDashboard() {
+      const badges = document.getElementById("admin-badges-izin");
+      if (badges) {
+        badges.innerHTML = stateIzinAdmin.map(iz => `
+          <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[10px] font-mono font-bold text-slate-700">${iz}</span>
+        `).join("");
+      }
+      renderTabelBelumLunas();
+      renderSaklarSesiAdmin();
+    }
+
+    function cariKodeSatuanAdmin() {
+      const kode = document.getElementById("admin-satuan-kode").value.trim().toUpperCase();
+      const peserta = statePesertaBelumLunas.find(p => p.kode === kode);
+      if (peserta) {
+        document.getElementById("satuan-nama-peserta").innerText = `${peserta.nama} · ${peserta.sekolah}`;
+        document.getElementById("satuan-status-peserta").innerText = "Status: Menunggu Pembayaran";
+      } else {
+        document.getElementById("satuan-nama-peserta").innerText = `${kode} (Data Peserta Simulasi)`;
+      }
+    }
+
+    async function tandaiLunasSatuanAdmin() {
+      const kode = document.getElementById("admin-satuan-kode").value.trim().toUpperCase();
+      const catatan = document.getElementById("satuan-catatan-admin").value.trim();
+      await api.post("/payments/admin/tandai-lunas", { kode_registrasi: kode, catatan });
+      statePesertaBelumLunas = statePesertaBelumLunas.filter(p => p.kode !== kode);
+      renderTabelBelumLunas();
+      alert(`Kode ${kode} berhasil ditandai LUNAS dan QR otomatis diterbitkan!`);
+    }
+
+    async function prosesTandaiLunasMassal() {
+      const teks = document.getElementById("admin-massal-textarea").value.trim();
+      const daftarKode = teks.split("\n").map(k => k.trim().toUpperCase()).filter(Boolean);
+      if (daftarKode.length === 0) return;
+
+      await api.post("/payments/admin/tandai-lunas-massal", { kode_registrasi: daftarKode });
+
+      const rincian = daftarKode.map(kode => {
+        if (kode.endsWith("TY") || !kode.startsWith("CGTK-")) {
+          return { kode, status: "GAGAL", alasan: "Kode tidak ada" };
+        }
+        const p = statePesertaBelumLunas.find(x => x.kode === kode);
+        return { kode, status: "LUNAS", nama: p ? p.nama : "Peserta Terverifikasi" };
+      });
+
+      const berhasil = rincian.filter(r => r.status === "LUNAS").length;
+      const gagalList = rincian.filter(r => r.status === "GAGAL");
+
+      document.getElementById("box-hasil-massal-admin").classList.remove("hidden");
+      document.getElementById("massal-ringkasan-teks").innerHTML = `<span class="text-emerald-700">✅ ${berhasil} berhasil</span> &middot; <span class="text-rose-600">❌ ${gagalList.length} gagal</span>`;
+
+      document.getElementById("massal-rincian-baris").innerHTML = rincian.map(r => `
+        <div class="flex items-center justify-between p-2 rounded-lg text-xs border ${r.status === 'LUNAS' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'}">
+          <span class="font-mono font-bold">${r.kode} ${r.nama ? '· ' + r.nama : ''}</span>
+          <span class="font-extrabold">${r.status === 'LUNAS' ? 'LUNAS' : r.alasan}</span>
+        </div>
+      `).join("");
+
+      const boxGagal = document.getElementById("box-massal-gagal");
+      if (gagalList.length > 0) {
+        boxGagal.classList.remove("hidden");
+        document.getElementById("textarea-kode-gagal").value = gagalList.map(g => g.kode).join("\n");
+      } else {
+        boxGagal.classList.add("hidden");
+      }
+    }
+
+    function salinKodeGagalMassal() {
+      const val = document.getElementById("textarea-kode-gagal").value;
+      navigator.clipboard.writeText(val);
+      alert("Daftar kode gagal berhasil disalin!");
+    }
+
+    async function tambahFieldFormBuilderAdmin() {
+      const kunci = document.getElementById("fb-admin-kunci").value.trim().toLowerCase();
+      const label = document.getElementById("fb-admin-label").value.trim();
+      const tipe = document.getElementById("fb-admin-tipe").value;
+      const opsiRaw = document.getElementById("fb-admin-opsi").value.trim();
+
+      if (!kunci || !label) return alert("Kunci dan Label wajib diisi!");
+      const opsi = opsiRaw ? opsiRaw.split(",").map(s => s.trim()).filter(Boolean) : [];
+
+      const fieldBaru = { kunci, label, tipe, opsi, wajib: true, urutan: stateFormFields.length + 1 };
+      await api.post("/form_fields/admin", fieldBaru);
+      stateFormFields.push(fieldBaru);
+      renderFormBuilder();
+      alert(`Pertanyaan "${label}" (${tipe}) berhasil ditambahkan ke Form Builder!`);
+      document.getElementById("fb-admin-kunci").value = "";
+      document.getElementById("fb-admin-label").value = "";
+      document.getElementById("fb-admin-opsi").value = "";
+    }
+
+    async function kirimPengumumanAdmin() {
+      const judul = document.getElementById("ann-admin-judul").value.trim();
+      const isi = document.getElementById("ann-admin-isi").value.trim();
+      const tingkat = document.getElementById("ann-admin-tingkat").value;
+
+      if (!judul || !isi) return alert("Judul dan isi pengumuman wajib diisi!");
+      await api.post("/announcements/admin", { judul, isi, tingkat });
+
+      if (tingkat === "DARURAT") {
+        tampilkanPopupMerah({ judul, isi });
+      } else {
+        alert(`Pengumuman biasa "${judul}" berhasil diterbitkan!`);
+      }
+      document.getElementById("ann-admin-judul").value = "";
+      document.getElementById("ann-admin-isi").value = "";
+    }
+
+    function renderTabelBelumLunas() {
+      const q = (document.getElementById("cari-belum-lunas")?.value || "").toLowerCase();
+      const tbody = document.getElementById("tbody-belum-lunas");
+      if (!tbody) return;
+      const tersaring = statePesertaBelumLunas.filter(p =>
+        p.nama.toLowerCase().includes(q) || p.sekolah.toLowerCase().includes(q) || p.kode.toLowerCase().includes(q)
+      );
+      tbody.innerHTML = tersaring.map(p => `
+        <tr>
+          <td class="py-2.5 px-3 font-mono font-bold text-slate-900">${p.kode}</td>
+          <td class="py-2.5 px-3 font-semibold text-slate-800">${p.nama}</td>
+          <td class="py-2.5 px-3 text-slate-600">${p.sekolah}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold text-[10px]">Lengkap</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function eksporCSVBelumLunas() {
+      const header = "Kode Registrasi,Nama Peserta,Asal Sekolah\n";
+      const baris = statePesertaBelumLunas.map(p => `${p.kode},"${p.nama}","${p.sekolah}"`).join("\n");
+      const blob = new Blob([header + baris], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Daftar_Belum_Lunas_CGTK_2027.csv";
+      a.click();
+    }
+
+    function renderSaklarSesiAdmin() {
+      const el = document.getElementById("admin-list-saklar-sesi");
+      if (!el) return;
+      el.innerHTML = stateSesiAcara.map(s => `
+        <div class="flex items-center justify-between p-4 rounded-2xl border ${s.status === 'ACTIVE' ? 'bg-emerald-50/60 border-emerald-300' : 'bg-slate-50 border-slate-200'}">
+          <div>
+            <p class="text-sm font-black text-slate-900">${s.nama} · ${s.lokasi}</p>
+            <p class="text-xs text-slate-500">${s.jam_mulai} – ${s.jam_selesai}</p>
+          </div>
+          <button onclick="ubahSaklarSesi(${s.id})" class="touch-target px-5 py-2.5 rounded-xl font-black text-xs shadow transition ${
+            s.status === 'ACTIVE' ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-slate-800 text-white hover:bg-slate-700'
+          }">
+            ● ${s.status}
+          </button>
+        </div>
+      `).join("");
+    }
+
+    async function ubahSaklarSesi(id) {
+      const sesi = stateSesiAcara.find(s => s.id === id);
+      if (!sesi) return;
+      if (sesi.status === "ACTIVE") {
+        const yakin = confirm(`KONFIRMASI PENTING!\nMenutup sesi "${sesi.nama}" akan mengunci kamera scanner seluruh panitia di lapangan seketika.\nYakin ingin menutup sesi?`);
+        if (!yakin) return;
+        sesi.status = "CLOSED";
+      } else {
+        sesi.status = "ACTIVE";
+      }
+      await api.patch(`/events/sessions/admin/${id}/saklar`, { status: sesi.status });
+      renderSaklarSesiAdmin();
+      renderDashboardPeserta();
+    }
+
+    function unduhLPJExcelBrowser() {
+      const dataLPJ = {
+        ringkasan: [{ Total_Daftar: 487, Total_Lunas: 465, Total_Hadir: 441 }],
+        peserta: [
+          { Kode: "CGTK-K7M2QX", Nama: "Budi Rokapalak", Sekolah: "SMAN 1 Pamekasan", Status: "LUNAS", Asal_Kabupaten: "Pamekasan", Tanggal_Lahir: "2008-05-12" }
+        ],
+        presensi: [
+          { Scan_UUID: "9f8e7d6c-5b4a", Nama: "Budi Rokapalak", Sesi: "Talkshow Alumni", Waktu: "2027-01-15T10:05:23+07:00" }
+        ],
+        kunjungan_booth: [
+          { Peserta: "Budi Rokapalak", Booth: "Booth Teknik Informatika", Jenis_Keaktifan: "AKTIF", XP: 20 }
+        ],
+        rekap_xp: [
+          { Posisi: 1, Nama: "Budi Rokapalak", Total_XP: 340, Level: "Penyusur Kampus" }
+        ],
+        audit: [
+          { Waktu: "2026-11-15T14:32:00+07:00", Pengguna: "Rina (Div Administrasi)", Aksi: "TANDAI_LUNAS", Kode: "CGTK-K7M2QX" }
+        ]
+      };
+
+      const wb = XLSX.utils.book_new();
+      [
+        ["Ringkasan", dataLPJ.ringkasan],
+        ["Data Peserta", dataLPJ.peserta],
+        ["Presensi", dataLPJ.presensi],
+        ["Kunjungan Booth", dataLPJ.kunjungan_booth],
+        ["Rekap XP", dataLPJ.rekap_xp],
+        ["Log Perubahan", dataLPJ.audit]
+      ].forEach(([namaSheet, isi]) => {
+        const ws = XLSX.utils.json_to_sheet(isi);
+        ws["!cols"] = Object.keys(isi[0] || {}).map(() => ({ wch: 24 }));
+        XLSX.utils.book_append_sheet(wb, ws, namaSheet);
+      });
+
+      XLSX.writeFile(wb, "LPJ_CGTK_2027.xlsx");
+    }
+
+    // =========================================================================
+    // BOOTSTRAP APLIKASI SAAT DIMUAT
+    // =========================================================================
+    window.addEventListener("DOMContentLoaded", async () => {
+      await bukaIndexedDB();
+      await siapkanDatabaseOfflineAwal();
+      renderLandingPage();
+      renderFormBuilder();
+      renderHalamanBayar();
+      renderDashboardPeserta();
+      inisialisasiScanner();
+      renderAdminDashboard();
+      mulaiPollingPengumuman();
+    });
+  </script>
+</body>
+</html>
